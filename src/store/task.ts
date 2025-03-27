@@ -1,6 +1,7 @@
 import { create } from "zustand";
+import { pick } from "radash";
 
-type TaskStore = {
+export type TaskStore = {
   question: string;
   questions: string;
   finalReport: string;
@@ -8,6 +9,7 @@ type TaskStore = {
   title: string;
   suggestion: string;
   tasks: SearchTask[];
+  feedback: string;
 };
 
 type TaskFunction = {
@@ -19,10 +21,14 @@ type TaskFunction = {
   setQuestion: (question: string) => void;
   updateQuestions: (questions: string) => void;
   updateFinalReport: (report: string) => void;
+  setFeedback: (feedback: string) => void;
   clear: () => void;
+  reset: () => void;
+  backup: () => TaskStore;
+  restore: (taskStore: TaskStore) => void;
 };
 
-export const useTaskStore = create<TaskStore & TaskFunction>((set, get) => ({
+const defaultValues: TaskStore = {
   question: "",
   questions: "",
   finalReport: "",
@@ -30,6 +36,11 @@ export const useTaskStore = create<TaskStore & TaskFunction>((set, get) => ({
   title: "",
   suggestion: "",
   tasks: [],
+  feedback: "",
+};
+
+export const useTaskStore = create<TaskStore & TaskFunction>((set, get) => ({
+  ...defaultValues,
   update: (tasks) => set(() => ({ tasks: [...tasks] })),
   setTitle: (title) => set(() => ({ title })),
   setSuggestion: (suggestion) => set(() => ({ suggestion })),
@@ -43,5 +54,13 @@ export const useTaskStore = create<TaskStore & TaskFunction>((set, get) => ({
   setQuestion: (question) => set(() => ({ question })),
   updateQuestions: (questions) => set(() => ({ questions })),
   updateFinalReport: (report) => set(() => ({ finalReport: report })),
+  setFeedback: (feedback) => set(() => ({ feedback })),
   clear: () => set(() => ({ tasks: [] })),
+  reset: () => set(() => ({ ...defaultValues })),
+  backup: () => {
+    return {
+      ...pick(get(), Object.keys(defaultValues) as (keyof TaskStore)[]),
+    } as TaskStore;
+  },
+  restore: (taskStore) => set(() => ({ ...taskStore })),
 }));

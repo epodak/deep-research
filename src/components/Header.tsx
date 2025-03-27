@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useTranslation } from "react-i18next";
-import { Settings, Github } from "lucide-react";
+import { Settings, Github, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGlobalStore } from "@/store/global";
 
@@ -11,7 +11,7 @@ const VERSION = process.env.NEXT_PUBLIC_VERSION;
 
 function Header() {
   const { t } = useTranslation();
-  const { setOpenSetting } = useGlobalStore();
+  const { setOpenSetting, setOpenHistory } = useGlobalStore();
 
   return (
     <>
@@ -29,6 +29,15 @@ function Header() {
               <Github className="h-5 w-5" />
             </Button>
           </a>
+          <Button
+            className="h-8 w-8"
+            variant="ghost"
+            size="icon"
+            onClick={() => setOpenHistory(true)}
+            title={t("research.history.title")}
+          >
+            <History className="h-5 w-5" />
+          </Button>
           <Button
             className="h-8 w-8"
             variant="ghost"

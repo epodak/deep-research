@@ -12,7 +12,8 @@
       "sources": "Sources",
       "thinking": "Thinking...",
       "research": "Research...",
-      "writing": "Writing..."
+      "writing": "Writing...",
+      "newResearch": "New Research"
     },
     "topic": {
       "title": "1. Research Topics",
@@ -35,6 +36,17 @@
       "title": "4. Final Report",
       "emptyTip": "Waiting for data to be collated...",
       "researchedInfor": "Researched {{total}} websites"
+    },
+    "history": {
+      "title": "History",
+      "name": "Title",
+      "emptyTip": "No history records",
+      "date": "Date",
+      "actions": "Action",
+      "load": "Load",
+      "delete": "Delete",
+      "close": "Close",
+      "noHistory": "No history records"
     }
   },
   "setting": {

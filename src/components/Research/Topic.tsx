@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, PlusCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,14 +26,19 @@ const formSchema = z.object({
 function Topic() {
   const { t } = useTranslation();
   const { askQuestions } = useDeepResearch();
+  const taskStore = useTaskStore();
   const [isThinking, setIsThinking] = useState<boolean>(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      topic: "",
+      topic: taskStore.question,
     },
   });
+
+  useEffect(() => {
+    form.setValue("topic", taskStore.question);
+  }, [taskStore.question, form]);
 
   async function handleSubmit(values: z.infer<typeof formSchema>) {
     const { apiKey, accessPassword } = useSettingStore.getState();
@@ -49,11 +54,28 @@ function Topic() {
     }
   }
 
+  function createNewResearch() {
+    taskStore.reset();
+    form.reset();
+  }
+
   return (
     <section className="p-4 border rounded-md mt-4">
-      <h3 className="font-semibold text-lg border-b mb-2 leading-10">
-        {t("research.topic.title")}
-      </h3>
+      <div className="flex justify-between items-center border-b mb-2">
+        <h3 className="font-semibold text-lg leading-10">
+          {t("research.topic.title")}
+        </h3>
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => createNewResearch()}
+            title={t("research.common.newResearch")}
+          >
+            <PlusCircle className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           <FormField

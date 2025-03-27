@@ -26,6 +26,7 @@ function FinalReport() {
       printable: "final-report",
       type: "html",
       documentTitle: taskStore.title,
+      targetStyles: ["prose", "max-w-full"],
     });
   }
 
@@ -40,7 +41,7 @@ function FinalReport() {
         <>
           <article
             id="final-report"
-            className="prose prose-slate dark:prose-invert mt-6 mx-2"
+            className="prose prose-slate dark:prose-invert max-w-full mt-6"
           >
             <Magicdown>{taskStore.finalReport}</Magicdown>
           </article>

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -37,12 +37,17 @@ function Feedback() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      feedback: "",
+      feedback: taskStore.feedback,
     },
   });
 
+  useEffect(() => {
+    form.setValue("feedback", taskStore.feedback);
+  }, [taskStore.feedback, form]);
+
   async function handleSubmit(values: z.infer<typeof formSchema>) {
-    const { question, questions } = useTaskStore.getState();
+    const { question, questions, setFeedback } = useTaskStore.getState();
+    setFeedback(values.feedback);
     const prompt = [
       `Initial Query: ${question}`,
       `Follow-up Questions: ${questions}`,

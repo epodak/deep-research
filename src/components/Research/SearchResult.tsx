@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -54,14 +54,23 @@ function SearchResult() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      suggestion: "",
+      suggestion: taskStore.suggestion,
     },
   });
 
+  useEffect(() => {
+    form.setValue("suggestion", taskStore.suggestion);
+  }, [taskStore.suggestion, form]);
+
   async function handleWriteFinalReport() {
-    setIsWriting(true);
-    await writeFinalReport();
-    setIsWriting(false);
+    try {
+      accurateTimerStart();
+      setIsWriting(true);
+      await writeFinalReport();
+      setIsWriting(false);
+    } finally {
+      accurateTimerStop();
+    }
   }
 
   async function handleSubmit(values: z.infer<typeof formSchema>) {
@@ -165,6 +174,7 @@ function SearchResult() {
                     <>
                       <LoaderCircle className="animate-spin" />
                       <span className="mx-1">{status}</span>
+                      <small className="font-mono">{formattedTime}</small>
                     </>
                   ) : (
                     t("research.common.writeReport")

@@ -1,10 +1,11 @@
 import type { NextConfig } from "next";
 import pkg from "./package.json";
 
-const API_PROXY_BASE_URL = process.env.API_PROXY_BASE_URL as string;
+const BUILD_MODE = process.env.NEXT_PUBLIC_BUILD_MODE;
+const API_PROXY_BASE_URL =
+  process.env.API_PROXY_BASE_URL || "https://generativelanguage.googleapis.com";
 const GOOGLE_GENERATIVE_AI_API_KEY = process.env
   .GOOGLE_GENERATIVE_AI_API_KEY as string;
-const BUILD_MODE = process.env.NEXT_PUBLIC_BUILD_MODE;
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -14,7 +15,16 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_VERSION: pkg.version,
   },
-  rewrites: async () => {
+};
+
+if (BUILD_MODE === "export") {
+  nextConfig.output = "export";
+  // Only used for static deployment, the default deployment directory is the root directory
+  nextConfig.basePath = "";
+} else if (BUILD_MODE === "standalone") {
+  nextConfig.output = "standalone";
+} else {
+  nextConfig.rewrites = async () => {
     return [
       {
         source: "/api/ai/google/v1beta/:path*",
@@ -25,20 +35,10 @@ const nextConfig: NextConfig = {
             value: "(?<key>.*)",
           },
         ],
-        destination: `${
-          API_PROXY_BASE_URL || "https://generativelanguage.googleapis.com"
-        }/v1beta/:path*?key=${GOOGLE_GENERATIVE_AI_API_KEY}`,
+        destination: `${API_PROXY_BASE_URL}/v1beta/:path*?key=${GOOGLE_GENERATIVE_AI_API_KEY}`,
       },
     ];
-  },
-};
-
-if (BUILD_MODE === "export") {
-  nextConfig.output = "export";
-  // Only used for static deployment, the default deployment directory is the root directory
-  nextConfig.basePath = "";
-} else if (BUILD_MODE === "standalone") {
-  nextConfig.output = "standalone";
+  };
 }
 
 export default nextConfig;

@@ -29,8 +29,8 @@ Deep Research is a cutting-edge project built with Next.js 15, leveraging the po
 
 ## 🎯 Roadmap
 
+- [x] Support preservation of research history
 - [ ] Support editing final report and search results
-- [ ] Support preservation of research history
 - [ ] Support file upload and local knowledge base
 - [ ] Support for other LLM models
 
@@ -120,34 +120,56 @@ Currently the project supports deployment to Cloudflare, but you need to follow 
 
 > ⚠️ Note: Most of the time, the docker version will lag behind the latest version by 1 to 2 days, so the "update exists" prompt will continue to appear after deployment, which is normal.
 
-```shell
-docker build -t deep-research .
-docker run -d --name deep-research -p 3333:3000 deep-research
+```bash
+docker pull xiangfa/deep-research:latest
+docker run -d --name deep-research -p 3333:3000 xiangfa/deep-research
 ```
 
 You can also specify additional environment variables:
 
-```shell
+```bash
 docker run -d --name deep-research \
    -p 3333:3000 \
    -e GOOGLE_GENERATIVE_AI_API_KEY=AIzaSy... \
    -e ACCESS_PASSWORD=your-password \
-   deep-research
+   xiangfa/deep-research
+```
+
+or build your own docker image:
+
+```bash
+docker build -t deep-research .
+docker run -d --name deep-research -p 3333:3000 deep-research
 ```
 
 If you need to specify other environment variables, please add `-e key=value` to the above command to specify it.
 
-Deploy using `docker-compose.yml` (Recommended):
+Deploy using `docker-compose.yml`:
 
-```shell
-docker compose -f docker-compose.yaml build
+```bash
+version: '3.9'
+services:
+   deep-research:
+      image: xiangfa/deep-research
+      container_name: deep-research
+      environment:
+         - GOOGLE_GENERATIVE_AI_API_KEY=AIzaSy...
+         - ACCESS_PASSWORD=your-password
+      ports:
+         - 3333:3000
+```
+
+or build your own docker compose:
+
+```bash
+docker compose -f docker-compose.yml build
 ```
 
 ### Static Deployment
 
 You can also build a static page version directly, and then upload all files in the `out` directory to any website service that supports static pages, such as Github Page, Cloudflare, Vercel, etc..
 
-```shell
+```bash
 pnpm build:export
 ```
 

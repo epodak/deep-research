@@ -12,7 +12,8 @@
       "sources": "资料来源",
       "thinking": "思考中...",
       "research": "研究中...",
-      "writing": "撰写中..."
+      "writing": "撰写中...",
+      "newResearch": "开始新的研究"
     },
     "topic": {
       "title": "1. 研究方向",
@@ -35,6 +36,16 @@
       "title": "4. 最终报告",
       "emptyTip": "等待数据汇总...",
       "researchedInfor": "已研究 {{total}} 个网站"
+    },
+    "history": {
+      "title": "历史记录",
+      "name": "标题",
+      "date": "创建时间",
+      "actions": "操作",
+      "load": "加载",
+      "delete": "删除",
+      "close": "关闭",
+      "noHistory": "没有历史记录"
     }
   },
   "setting": {
