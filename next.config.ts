@@ -21,24 +21,36 @@ if (BUILD_MODE === "export") {
   nextConfig.output = "export";
   // Only used for static deployment, the default deployment directory is the root directory
   nextConfig.basePath = "";
+  nextConfig.webpack = (config) => {
+    config.module.rules.push({
+      test: /src\/app\/api/,
+      loader: "ignore-loader",
+    });
+    return config;
+  };
 } else if (BUILD_MODE === "standalone") {
   nextConfig.output = "standalone";
 } else {
-  nextConfig.rewrites = async () => {
-    return [
-      {
-        source: "/api/ai/google/v1beta/:path*",
-        has: [
-          {
-            type: "header",
-            key: "x-goog-api-key",
-            value: "(?<key>.*)",
-          },
-        ],
-        destination: `${API_PROXY_BASE_URL}/v1beta/:path*?key=${GOOGLE_GENERATIVE_AI_API_KEY}`,
-      },
-    ];
-  };
+  if (
+    GOOGLE_GENERATIVE_AI_API_KEY &&
+    !GOOGLE_GENERATIVE_AI_API_KEY.includes(",")
+  ) {
+    nextConfig.rewrites = async () => {
+      return [
+        {
+          source: "/api/ai/google/v1beta/:path*",
+          has: [
+            {
+              type: "header",
+              key: "x-goog-api-key",
+              value: "(?<key>.*)",
+            },
+          ],
+          destination: `${API_PROXY_BASE_URL}/v1beta/:path*?key=${GOOGLE_GENERATIVE_AI_API_KEY}`,
+        },
+      ];
+    };
+  }
 }
 
 export default nextConfig;

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { shuffle } from "radash";
 
 export const runtime = "edge";
 export const preferredRegion = [
@@ -17,25 +18,30 @@ const GOOGLE_GENERATIVE_AI_API_KEY = process.env
 const API_PROXY_BASE_URL =
   process.env.API_PROXY_BASE_URL || "https://generativelanguage.googleapis.com";
 
-export async function POST(req: NextRequest) {
-  const body = await req.json();
+async function handler(req: NextRequest) {
+  let body;
+  if (req.method.toUpperCase() !== "GET") {
+    body = await req.json();
+  }
   const searchParams = req.nextUrl.searchParams;
   const path = searchParams.getAll("slug");
   searchParams.delete("slug");
   const params = searchParams.toString();
+  // Support multi-key polling,
+  const apiKeys = shuffle(GOOGLE_GENERATIVE_AI_API_KEY?.split(",") || []);
 
   try {
     let url = `${API_PROXY_BASE_URL}/${path.join("/")}`;
     if (params) url += `?${params}`;
     const response = await fetch(url, {
-      method: "POST",
+      method: req.method,
       headers: {
         "Content-Type": req.headers.get("Content-Type") || "application/json",
         "x-goog-api-client":
           req.headers.get("x-goog-api-client") || "genai-js/0.24.0",
-        "x-goog-api-key": GOOGLE_GENERATIVE_AI_API_KEY,
+        "x-goog-api-key": apiKeys[0],
       },
-      body: JSON.stringify(body),
+      body: body ? JSON.stringify(body) : undefined,
     });
     return new NextResponse(response.body, response);
   } catch (error) {
@@ -48,3 +54,5 @@ export async function POST(req: NextRequest) {
     }
   }
 }
+
+export { handler as GET, handler as POST, handler as PUT, handler as DELETE };

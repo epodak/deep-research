@@ -26,14 +26,14 @@ function Home() {
         <SearchResult />
         <FinalReport />
       </main>
-      <footer className="my-4 text-center text-sm text-gray-600">
+      <footer className="my-4 text-center text-sm text-gray-600 print:hidden">
         <a href="https://github.com/u14app/" target="_blank">
           {t("copyright", {
             name: "U14App",
           })}
         </a>
       </footer>
-      <aside>
+      <aside className="print:hidden">
         <Setting
           open={globalStore.openSetting}
           onClose={() => globalStore.setOpenSetting(false)}

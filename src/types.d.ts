@@ -13,9 +13,15 @@ interface SearchTask {
   sources: Source[];
 }
 
+interface Source {
+  title?: string;
+  url: string;
+}
+
 interface ResearchHistory {
   id: string;
   createdAt: number;
+  updatedAt?: number;
   title: string;
   question: string;
   questions: string;
@@ -23,6 +29,7 @@ interface ResearchHistory {
   query: string;
   suggestion: string;
   tasks: SearchTask[];
+  sources: Source[];
   feedback: string;
 }
 
@@ -33,12 +40,4 @@ interface PartialJson {
     | "successful-parse"
     | "repaired-parse"
     | "failed-parse";
-}
-
-interface GeminiError {
-  error: {
-    code: number;
-    message: string;
-    status: string;
-  };
 }

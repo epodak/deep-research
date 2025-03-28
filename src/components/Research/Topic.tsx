@@ -1,10 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { LoaderCircle, PlusCircle } from "lucide-react";
+import { LoaderCircle, SquarePlus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/Button";
 import {
   Form,
   FormControl,
@@ -13,11 +14,11 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import useDeepResearch from "@/hooks/useDeepResearch";
 import { useGlobalStore } from "@/store/global";
 import { useSettingStore } from "@/store/setting";
 import { useTaskStore } from "@/store/task";
+import { useHistoryStore } from "@/store/history";
 
 const formSchema = z.object({
   topic: z.string().min(2),
@@ -43,8 +44,12 @@ function Topic() {
   async function handleSubmit(values: z.infer<typeof formSchema>) {
     const { apiKey, accessPassword } = useSettingStore.getState();
     if (apiKey || accessPassword) {
-      const { setQuestion } = useTaskStore.getState();
+      const { id, setQuestion } = useTaskStore.getState();
       setIsThinking(true);
+      if (id !== "") {
+        createNewResearch();
+        form.setValue("topic", values.topic);
+      }
       setQuestion(values.topic);
       await askQuestions();
       setIsThinking(false);
@@ -55,12 +60,15 @@ function Topic() {
   }
 
   function createNewResearch() {
-    taskStore.reset();
+    const { id, backup, reset } = useTaskStore.getState();
+    const { update } = useHistoryStore.getState();
+    if (id) update(id, backup());
+    reset();
     form.reset();
   }
 
   return (
-    <section className="p-4 border rounded-md mt-4">
+    <section className="p-4 border rounded-md mt-4 print:hidden">
       <div className="flex justify-between items-center border-b mb-2">
         <h3 className="font-semibold text-lg leading-10">
           {t("research.topic.title")}
@@ -72,7 +80,7 @@ function Topic() {
             onClick={() => createNewResearch()}
             title={t("research.common.newResearch")}
           >
-            <PlusCircle className="h-5 w-5" />
+            <SquarePlus />
           </Button>
         </div>
       </div>

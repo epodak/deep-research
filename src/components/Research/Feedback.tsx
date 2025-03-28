@@ -1,11 +1,11 @@
 "use client";
+import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle } from "lucide-react";
-import Magicdown from "@/components/Magicdown";
 import {
   Form,
   FormControl,
@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import useDeepResearch from "@/hooks/useDeepResearch";
 import useAccurateTimer from "@/hooks/useAccurateTimer";
 import { useTaskStore } from "@/store/task";
+
+const MilkdownEditor = dynamic(() => import("@/components/MilkdownEditor"));
 
 const formSchema = z.object({
   feedback: z.string(),
@@ -65,7 +67,7 @@ function Feedback() {
   }
 
   return (
-    <section className="p-4 border rounded-md mt-4">
+    <section className="p-4 border rounded-md mt-4 print:hidden">
       <h3 className="font-semibold text-lg border-b mb-2 leading-10">
         {t("research.feedback.title")}
       </h3>
@@ -73,9 +75,11 @@ function Feedback() {
         <div>{t("research.feedback.emptyTip")}</div>
       ) : (
         <div>
-          <article className="prose prose-slate dark:prose-invert mt-6">
-            <Magicdown>{taskStore.questions}</Magicdown>
-          </article>
+          <MilkdownEditor
+            className="prose prose-slate dark:prose-invert max-w-full mt-6 min-h-20"
+            value={taskStore.questions}
+            onChange={(value) => taskStore.updateQuestions(value)}
+          ></MilkdownEditor>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)}>
               <FormField
@@ -105,7 +109,7 @@ function Feedback() {
                 {isThinking ? (
                   <>
                     <LoaderCircle className="animate-spin" />
-                    <span className="mx-1">{status}</span>
+                    <span>{status}</span>
                     <small className="font-mono">{formattedTime}</small>
                   </>
                 ) : (

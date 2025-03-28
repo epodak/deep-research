@@ -31,11 +31,13 @@ function formatDate(timestamp: number) {
 
 function History({ open, onClose }: HistoryProps) {
   const { t } = useTranslation();
-  const { restore, reset } = useTaskStore();
-  const { history, load, remove } = useHistoryStore();
+  const { backup, restore, reset } = useTaskStore();
+  const { history, load, update, remove } = useHistoryStore();
 
   async function loadHistory(id: string) {
+    const { id: currentId } = useTaskStore.getState();
     const data = load(id);
+    if (currentId) update(currentId, backup());
     if (data) {
       reset();
       restore(data);

@@ -2,7 +2,7 @@
 import dynamic from "next/dynamic";
 import { useTranslation } from "react-i18next";
 import { Settings, Github, History } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/Button";
 import { useGlobalStore } from "@/store/global";
 
 const ThemeToggle = dynamic(() => import("@/components/Theme/ToggleButton"));
@@ -15,7 +15,7 @@ function Header() {
 
   return (
     <>
-      <header className="flex justify-between items-center my-6">
+      <header className="flex justify-between items-center my-6 print:hidden">
         <a href="https://github.com/u14app/deep-research" target="_blank">
           <h1 className="text-center text-2xl font-bold">
             {t("title")}
@@ -25,7 +25,12 @@ function Header() {
         <div className="flex gap-1">
           <ThemeToggle />
           <a href="https://github.com/u14app/deep-research" target="_blank">
-            <Button className="h-8 w-8" variant="ghost" size="icon">
+            <Button
+              className="h-8 w-8"
+              title={t("openSource")}
+              variant="ghost"
+              size="icon"
+            >
               <Github className="h-5 w-5" />
             </Button>
           </a>
@@ -40,6 +45,7 @@ function Header() {
           </Button>
           <Button
             className="h-8 w-8"
+            title={t("setting.title")}
             variant="ghost"
             size="icon"
             onClick={() => setOpenSetting(true)}
