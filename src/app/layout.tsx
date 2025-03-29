@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import ThemeProvider from "@/components/Theme/Provider";
-import I18Provider from "@/components/I18nProvider";
+import ThemeProvider from "@/components/Provider/Theme";
+import I18Provider from "@/components/Provider/I18n";
 import { Toaster } from "@/components/ui/sonner";
 
 import "./globals.css";

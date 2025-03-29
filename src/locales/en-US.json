@@ -110,6 +110,9 @@
     "networkingModel": "Networking Model",
     "language": "Language",
     "refresh": "Click Refresh Model",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark",
     "save": "Save",
     "cancel": "Cancel"
   }

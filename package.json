@@ -1,7 +1,7 @@
 {
   "name": "deep-research",
   "description": "Deep Research with Google Gemini Models.",
-  "version": "0.6.3",
+  "version": "0.6.5",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -35,7 +35,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
     "file-saver": "^2.0.5",
-    "i18next": "^24.2.2",
+    "i18next": "^24.2.3",
     "i18next-browser-languagedetector": "^8.0.4",
     "i18next-resources-to-backend": "^1.2.1",
     "localforage": "^1.10.0",

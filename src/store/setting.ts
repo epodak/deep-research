@@ -8,19 +8,21 @@ export interface SettingStore {
   thinkingModel: string;
   networkingModel: string;
   language: string;
+  theme: string;
 }
 
 interface SettingFunction {
   update: (values: Partial<SettingStore>) => void;
 }
 
-export const defaultValues = {
+export const defaultValues: SettingStore = {
   apiKey: "",
   apiProxy: "",
   accessPassword: "",
   thinkingModel: "gemini-2.0-flash-thinking-exp",
   networkingModel: "gemini-2.0-flash-exp",
   language: "",
+  theme: "system",
 };
 
 export const useSettingStore = create(

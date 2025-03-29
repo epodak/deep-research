@@ -101,7 +101,7 @@ Follow these steps to get Deep Research up and running on your local browser.
    - `HEAD_SCRIPTS`: **Optional** Injected script code can be used for statistics or error tracking.
 
    **Privacy Reminder:** These environment variables are primarily used for **server-side API calls**. When using the **local API mode**, no API keys or server-side configurations are needed, further enhancing your privacy.
-   **Multi-key Support:** Supports multiple keys, each key is separated by `,`, i.e. `key1,key2,key3`
+   **Multi-key Support:** Supports multiple keys, each key is separated by `,`, i.e. `key1,key2,key3`. **Cloudflare cannot use multi-key for the time being because the official build script does not support Next.js 15.**
 
 4. **Run the development server:**
 

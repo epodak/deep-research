@@ -1,11 +1,8 @@
 "use client";
-import dynamic from "next/dynamic";
 import { useTranslation } from "react-i18next";
 import { Settings, Github, History } from "lucide-react";
 import { Button } from "@/components/Button";
 import { useGlobalStore } from "@/store/global";
-
-const ThemeToggle = dynamic(() => import("@/components/Theme/ToggleButton"));
 
 const VERSION = process.env.NEXT_PUBLIC_VERSION;
 
@@ -15,15 +12,14 @@ function Header() {
 
   return (
     <>
-      <header className="flex justify-between items-center my-6 print:hidden">
+      <header className="flex justify-between items-center my-6 max-sm:my-4 print:hidden">
         <a href="https://github.com/u14app/deep-research" target="_blank">
-          <h1 className="text-center text-2xl font-bold">
+          <h1 className="text-left text-xl font-semibold">
             {t("title")}
             <small className="ml-2 font-normal text-base">v{VERSION}</small>
           </h1>
         </a>
         <div className="flex gap-1">
-          <ThemeToggle />
           <a href="https://github.com/u14app/deep-research" target="_blank">
             <Button
               className="h-8 w-8"

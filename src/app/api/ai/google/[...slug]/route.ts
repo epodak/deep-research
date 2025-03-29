@@ -13,8 +13,8 @@ export const preferredRegion = [
   "kix1",
 ];
 
-const GOOGLE_GENERATIVE_AI_API_KEY = process.env
-  .GOOGLE_GENERATIVE_AI_API_KEY as string;
+const GOOGLE_GENERATIVE_AI_API_KEY =
+  process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
 const API_PROXY_BASE_URL =
   process.env.API_PROXY_BASE_URL || "https://generativelanguage.googleapis.com";
 
@@ -28,12 +28,12 @@ async function handler(req: NextRequest) {
   searchParams.delete("slug");
   const params = searchParams.toString();
   // Support multi-key polling,
-  const apiKeys = shuffle(GOOGLE_GENERATIVE_AI_API_KEY?.split(",") || []);
+  const apiKeys = shuffle(GOOGLE_GENERATIVE_AI_API_KEY.split(","));
 
   try {
-    let url = `${API_PROXY_BASE_URL}/${path.join("/")}`;
+    let url = `${API_PROXY_BASE_URL}/${decodeURIComponent(path.join("/"))}`;
     if (params) url += `?${params}`;
-    const response = await fetch(url, {
+    const payload: RequestInit = {
       method: req.method,
       headers: {
         "Content-Type": req.headers.get("Content-Type") || "application/json",
@@ -41,8 +41,9 @@ async function handler(req: NextRequest) {
           req.headers.get("x-goog-api-client") || "genai-js/0.24.0",
         "x-goog-api-key": apiKeys[0],
       },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    };
+    if (body) payload.body = JSON.stringify(body);
+    const response = await fetch(url, payload);
     return new NextResponse(response.body, response);
   } catch (error) {
     if (error instanceof Error) {

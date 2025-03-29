@@ -1,7 +1,10 @@
 "use client";
 import dynamic from "next/dynamic";
+import { useLayoutEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "next-themes";
 import { useGlobalStore } from "@/store/global";
+import { useSettingStore } from "@/store/setting";
 
 const Header = dynamic(() => import("@/components/Header"));
 const Setting = dynamic(() => import("@/components/Setting"));
@@ -17,6 +20,13 @@ function Home() {
   const { t } = useTranslation();
   const globalStore = useGlobalStore();
 
+  const { theme } = useSettingStore();
+  const { setTheme } = useTheme();
+
+  useLayoutEffect(() => {
+    const settingStore = useSettingStore.getState();
+    setTheme(settingStore.theme);
+  }, [theme, setTheme]);
   return (
     <div className="max-w-screen-md mx-auto px-4">
       <Header />

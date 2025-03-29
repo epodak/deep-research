@@ -110,6 +110,9 @@
     "networkingModel": "联网模型",
     "language": "界面语言",
     "refresh": "点击刷新模型",
+    "system": "跟随系统",
+    "light": "明亮",
+    "dark": "黑暗",
     "save": "保存",
     "cancel": "取消"
   }
