@@ -2,20 +2,6 @@ import { useState } from "react";
 import { useSettingStore } from "@/store/setting";
 import { shuffle } from "radash";
 
-type Model = {
-  name: string;
-  description: string;
-  displayName: string;
-  inputTokenLimit: number;
-  maxTemperature?: number;
-  outputTokenLimit: number;
-  temperature?: number;
-  topK?: number;
-  topP?: number;
-  supportedGenerationMethods: string[];
-  version: string;
-};
-
 function useModel() {
   const [modelList, setModelList] = useState<string[]>([]);
 
@@ -42,8 +28,10 @@ function useModel() {
       );
       const { models = [] } = await response.json();
       const newModelList = (models as Model[])
-        .filter((item) =>
-          item.supportedGenerationMethods.includes("generateContent")
+        .filter(
+          (item) =>
+            item.name.startsWith("models/gemini") &&
+            item.supportedGenerationMethods.includes("generateContent")
         )
         .map((item) => item.name.replace("models/", ""));
       setModelList(newModelList);

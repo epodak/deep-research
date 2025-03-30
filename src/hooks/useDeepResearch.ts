@@ -18,6 +18,7 @@ import {
   writeFinalReportPrompt,
   getSERPQuerySchema,
 } from "@/utils/deep-research";
+import { isNetworkingModel } from "@/utils/models";
 import { parseError } from "@/utils/error";
 import { pick, flat } from "radash";
 
@@ -75,7 +76,7 @@ function useDeepResearch() {
   }
 
   async function runSearchTask(queries: SearchTask[]) {
-    const { language } = useSettingStore.getState();
+    const { networkingModel, language } = useSettingStore.getState();
     setStatus(t("research.common.research"));
     const plimit = Plimit(1);
     for await (const item of queries) {
@@ -85,7 +86,12 @@ function useDeepResearch() {
         taskStore.updateTask(item.query, { state: "processing" });
         const provider = createProvider("google");
         const searchResult = streamText({
-          model: provider("gemini-2.0-flash-exp", { useSearchGrounding: true }),
+          model: provider(
+            networkingModel,
+            isNetworkingModel(networkingModel)
+              ? { useSearchGrounding: true }
+              : {}
+          ),
           system: getSystemPrompt(),
           prompt: [
             processSearchResultPrompt(item.query, item.researchGoal),

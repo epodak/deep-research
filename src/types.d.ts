@@ -33,6 +33,20 @@ interface ResearchHistory {
   feedback: string;
 }
 
+interface Model {
+  name: string;
+  description: string;
+  displayName: string;
+  inputTokenLimit: number;
+  maxTemperature?: number;
+  outputTokenLimit: number;
+  temperature?: number;
+  topK?: number;
+  topP?: number;
+  supportedGenerationMethods: string[];
+  version: string;
+}
+
 interface PartialJson {
   value: JSONValue | undefined;
   state:

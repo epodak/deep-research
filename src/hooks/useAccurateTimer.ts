@@ -37,12 +37,12 @@ function useAccurateTimer() {
   }
 
   function stop() {
-    if (isRunning && timerRef.current) {
+    if (timerRef.current) {
       setIsRunning(false);
       cancelAnimationFrame(timerRef.current);
       timerRef.current = null;
-      setTime(0);
     }
+    setTime(0);
   }
 
   useEffect(() => {

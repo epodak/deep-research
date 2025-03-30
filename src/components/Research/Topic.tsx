@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import useDeepResearch from "@/hooks/useDeepResearch";
+import useAccurateTimer from "@/hooks/useAccurateTimer";
 import { useGlobalStore } from "@/store/global";
 import { useSettingStore } from "@/store/setting";
 import { useTaskStore } from "@/store/task";
@@ -26,8 +27,13 @@ const formSchema = z.object({
 
 function Topic() {
   const { t } = useTranslation();
-  const { askQuestions } = useDeepResearch();
   const taskStore = useTaskStore();
+  const { askQuestions } = useDeepResearch();
+  const {
+    formattedTime,
+    start: accurateTimerStart,
+    stop: accurateTimerStop,
+  } = useAccurateTimer();
   const [isThinking, setIsThinking] = useState<boolean>(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -45,14 +51,19 @@ function Topic() {
     const { apiKey, accessPassword } = useSettingStore.getState();
     if (apiKey || accessPassword) {
       const { id, setQuestion } = useTaskStore.getState();
-      setIsThinking(true);
-      if (id !== "") {
-        createNewResearch();
-        form.setValue("topic", values.topic);
+      try {
+        setIsThinking(true);
+        accurateTimerStart();
+        if (id !== "") {
+          createNewResearch();
+          form.setValue("topic", values.topic);
+        }
+        setQuestion(values.topic);
+        await askQuestions();
+      } finally {
+        setIsThinking(false);
+        accurateTimerStop();
       }
-      setQuestion(values.topic);
-      await askQuestions();
-      setIsThinking(false);
     } else {
       const { setOpenSetting } = useGlobalStore.getState();
       setOpenSetting(true);
@@ -108,7 +119,8 @@ function Topic() {
             {isThinking ? (
               <>
                 <LoaderCircle className="animate-spin" />
-                {t("research.common.thinkingQuestion")}
+                <span>{t("research.common.thinkingQuestion")}</span>
+                <small className="font-mono">{formattedTime}</small>
               </>
             ) : (
               t("research.common.startThinking")
