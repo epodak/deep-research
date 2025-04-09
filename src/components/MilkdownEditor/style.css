@@ -33,8 +33,13 @@
 
   .milkdown-editor {
     @apply p-0;
-    &[contenteditable="false"] > p:last-child {
-      @apply hidden;
+    &[contenteditable="false"] {
+      br.ProseMirror-trailingBreak {
+        display: none;
+      }
+      .crepe-placeholder {
+        display: none;
+      }
     }
   }
 

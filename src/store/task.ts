@@ -10,6 +10,7 @@ export interface TaskStore {
   query: string;
   title: string;
   suggestion: string;
+  requirement: string;
   tasks: SearchTask[];
   sources: Source[];
   feedback: string;
@@ -20,6 +21,7 @@ type TaskFunction = {
   setId: (id: string) => void;
   setTitle: (title: string) => void;
   setSuggestion: (suggestion: string) => void;
+  setRequirement: (requirement: string) => void;
   setQuery: (query: string) => void;
   updateTask: (query: string, task: Partial<SearchTask>) => void;
   removeTask: (query: string) => boolean;
@@ -42,6 +44,7 @@ const defaultValues: TaskStore = {
   query: "",
   title: "",
   suggestion: "",
+  requirement: "",
   tasks: [],
   sources: [],
   feedback: "",
@@ -55,6 +58,7 @@ export const useTaskStore = create(
       setId: (id) => set(() => ({ id })),
       setTitle: (title) => set(() => ({ title })),
       setSuggestion: (suggestion) => set(() => ({ suggestion })),
+      setRequirement: (requirement) => set(() => ({ requirement })),
       setQuery: (query) => set(() => ({ query })),
       updateTask: (query, task) => {
         const newTasks = get().tasks.map((item) => {

@@ -14,8 +14,8 @@ import { replaceAll } from "@milkdown/kit/utils";
 import { diagram } from "@xiangfa/milkdown-plugin-diagram";
 import { math } from "@xiangfa/milkdown-plugin-math";
 import { MarkdownEditor } from "@xiangfa/mdeditor";
-import FloatingMenu from "@/components/FloatingMenu";
-import { Button } from "@/components/Button";
+import FloatingMenu from "@/components/Internal/FloatingMenu";
+import { Button } from "@/components/Internal/Button";
 import { cn } from "@/utils/style";
 
 import "@milkdown/crepe/theme/common/style.css";
@@ -186,7 +186,7 @@ function MilkdownEditor(props: EditorProps) {
         ref={markdownEditorRef}
       ></div>
       <FloatingMenu targetRef={containerRef} fixedTopOffset={16}>
-        <div className="flex flex-col gap-1 border rounded-full py-2 p-1 bg-white/95 dark:bg-slate-800/95 print:hidden">
+        <div className="flex flex-col gap-1 border rounded-full py-2 p-1 bg-white dark:bg-slate-800 opacity-30 print:hidden hover:opacity-100">
           {mode === "WYSIWYM" ? (
             <Button
               className="float-menu-button"

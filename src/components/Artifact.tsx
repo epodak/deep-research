@@ -14,8 +14,9 @@ import {
   ChevronDown,
   ChevronsDown,
   LoaderCircle,
+  ScrollText,
 } from "lucide-react";
-import { Button } from "@/components/Button";
+import { Button } from "@/components/Internal/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,8 +48,13 @@ function Artifact(props: Props) {
     tooltipSideOffset = 0,
   } = props;
   const { t } = useTranslation();
-  const { loadingAction, translate, changeReadingLevel, adjustLength } =
-    useArtifact({ value, onChange });
+  const {
+    loadingAction,
+    translate,
+    changeReadingLevel,
+    adjustLength,
+    continuation,
+  } = useArtifact({ value, onChange });
 
   return (
     <>
@@ -279,6 +285,23 @@ function Artifact(props: Props) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <Button
+        className={buttonClassName}
+        type="button"
+        size="icon"
+        variant="ghost"
+        title={t("artifact.continuation")}
+        side={tooltipSide}
+        sideoffset={tooltipSideOffset}
+        disabled={loadingAction !== ""}
+        onClick={() => continuation(systemInstruction)}
+      >
+        {loadingAction === "continuation" ? (
+          <LoaderCircle className="animate-spin" />
+        ) : (
+          <ScrollText />
+        )}
+      </Button>
     </>
   );
 }

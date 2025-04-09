@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Crepe } from "@milkdown/crepe";
 import { replaceAll, getHTML } from "@milkdown/kit/utils";
-import { Button } from "@/components/Button";
+import { Button } from "@/components/Internal/Button";
 import {
   Form,
   FormControl,
@@ -38,7 +38,7 @@ import { downloadFile } from "@/utils/file";
 const MilkdownEditor = dynamic(() => import("@/components/MilkdownEditor"));
 
 const formSchema = z.object({
-  suggestion: z.string(),
+  suggestion: z.string().optional(),
 });
 
 function TaskState({ state }: { state: SearchTask["state"] }) {
@@ -82,8 +82,7 @@ function ResearchGoal({
 function SearchResult() {
   const { t } = useTranslation();
   const taskStore = useTaskStore();
-  const { status, runSearchTask, reviewSearchResult, writeFinalReport } =
-    useDeepResearch();
+  const { status, runSearchTask, reviewSearchResult } = useDeepResearch();
   const {
     formattedTime,
     start: accurateTimerStart,
@@ -91,7 +90,6 @@ function SearchResult() {
   } = useAccurateTimer();
   const [milkdownEditor, setMilkdownEditor] = useState<Crepe>();
   const [isThinking, setIsThinking] = useState<boolean>(false);
-  const [isWriting, setIsWriting] = useState<boolean>(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -103,17 +101,6 @@ function SearchResult() {
   useEffect(() => {
     form.setValue("suggestion", taskStore.suggestion);
   }, [taskStore.suggestion, form]);
-
-  async function handleWriteFinalReport() {
-    try {
-      accurateTimerStart();
-      setIsWriting(true);
-      await writeFinalReport();
-    } finally {
-      setIsWriting(false);
-      accurateTimerStop();
-    }
-  }
 
   function getSearchResultContent(item: SearchTask) {
     return [
@@ -136,7 +123,7 @@ function SearchResult() {
       if (unfinishedTasks.length > 0) {
         await runSearchTask(unfinishedTasks);
       } else {
-        setSuggestion(values.suggestion);
+        if (values.suggestion) setSuggestion(values.suggestion);
         await reviewSearchResult();
         // Clear previous research suggestions
         setSuggestion("");
@@ -288,33 +275,22 @@ function SearchResult() {
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-4 max-sm:gap-2 w-full mt-4">
-                <Button type="submit" variant="secondary" disabled={isThinking}>
-                  {isThinking ? (
-                    <>
-                      <LoaderCircle className="animate-spin" />
-                      <span>{status}</span>
-                      <small className="font-mono">{formattedTime}</small>
-                    </>
-                  ) : (
-                    t("research.common.continueResearch")
-                  )}
-                </Button>
-                <Button
-                  disabled={isWriting}
-                  onClick={() => handleWriteFinalReport()}
-                >
-                  {isWriting ? (
-                    <>
-                      <LoaderCircle className="animate-spin" />
-                      <span>{status}</span>
-                      <small className="font-mono">{formattedTime}</small>
-                    </>
-                  ) : (
-                    t("research.common.writeReport")
-                  )}
-                </Button>
-              </div>
+              <Button
+                className="w-full mt-4"
+                type="submit"
+                variant="secondary"
+                disabled={isThinking}
+              >
+                {isThinking ? (
+                  <>
+                    <LoaderCircle className="animate-spin" />
+                    <span>{status}</span>
+                    <small className="font-mono">{formattedTime}</small>
+                  </>
+                ) : (
+                  t("research.common.continueResearch")
+                )}
+              </Button>
             </form>
           </Form>
         </div>

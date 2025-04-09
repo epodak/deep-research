@@ -1,7 +1,7 @@
 "use client";
 import { useTranslation } from "react-i18next";
 import { Settings, Github, History } from "lucide-react";
-import { Button } from "@/components/Button";
+import { Button } from "@/components/Internal/Button";
 import { useGlobalStore } from "@/store/global";
 
 const VERSION = process.env.NEXT_PUBLIC_VERSION;

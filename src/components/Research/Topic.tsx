@@ -5,7 +5,7 @@ import { LoaderCircle, SquarePlus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/Button";
+import { Button } from "@/components/Internal/Button";
 import {
   Form,
   FormControl,

@@ -15,36 +15,8 @@ interface SearchTask {
 
 interface Source {
   title?: string;
+  content?: string;
   url: string;
-}
-
-interface ResearchHistory {
-  id: string;
-  createdAt: number;
-  updatedAt?: number;
-  title: string;
-  question: string;
-  questions: string;
-  finalReport: string;
-  query: string;
-  suggestion: string;
-  tasks: SearchTask[];
-  sources: Source[];
-  feedback: string;
-}
-
-interface Model {
-  name: string;
-  description: string;
-  displayName: string;
-  inputTokenLimit: number;
-  maxTemperature?: number;
-  outputTokenLimit: number;
-  temperature?: number;
-  topK?: number;
-  topP?: number;
-  supportedGenerationMethods: string[];
-  version: string;
 }
 
 interface PartialJson {
@@ -54,4 +26,10 @@ interface PartialJson {
     | "successful-parse"
     | "repaired-parse"
     | "failed-parse";
+}
+
+interface WebSearchResult {
+  content: string;
+  url: string;
+  title?: string;
 }

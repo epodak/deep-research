@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { streamText, smoothStream } from "ai";
 import { parsePartialJson } from "@ai-sdk/ui-utils";
+import { openai } from "@ai-sdk/openai";
 import { useTranslation } from "react-i18next";
 import Plimit from "p-limit";
 import { toast } from "sonner";
-import { useModelProvider } from "@/hooks/useAiProvider";
+import useModelProvider from "@/hooks/useAiProvider";
+import useWebSearch from "@/hooks/useWebSearch";
 import { useTaskStore } from "@/store/task";
 import { useHistoryStore } from "@/store/history";
 import { useSettingStore } from "@/store/setting";
@@ -13,6 +15,7 @@ import {
   getOutputGuidelinesPrompt,
   generateQuestionsPrompt,
   generateSerpQueriesPrompt,
+  processResultPrompt,
   processSearchResultPrompt,
   reviewSerpQueriesPrompt,
   writeFinalReportPrompt,
@@ -49,22 +52,23 @@ function handleError(error: unknown) {
 function useDeepResearch() {
   const { t } = useTranslation();
   const taskStore = useTaskStore();
-  const { createProvider } = useModelProvider();
+  const { createProvider, getModel } = useModelProvider();
+  const { tavily, firecrawl } = useWebSearch();
   const [status, setStatus] = useState<string>("");
 
   async function askQuestions() {
-    const { thinkingModel, language } = useSettingStore.getState();
+    const { language } = useSettingStore.getState();
     const { question } = useTaskStore.getState();
+    const { thinkingModel } = getModel();
     setStatus(t("research.common.thinking"));
-    const provider = createProvider("google");
     const result = streamText({
-      model: provider(thinkingModel),
+      model: createProvider(thinkingModel),
       system: getSystemPrompt(),
       prompt: [
         generateQuestionsPrompt(question),
         getResponseLanguagePrompt(language),
       ].join("\n\n"),
-      experimental_transform: smoothStream(),
+      experimental_transform: smoothStream({ delayInMs: 0 }),
       onError: handleError,
     });
     let content = "";
@@ -76,60 +80,154 @@ function useDeepResearch() {
   }
 
   async function runSearchTask(queries: SearchTask[]) {
-    const { networkingModel, language } = useSettingStore.getState();
+    const {
+      provider,
+      enableSearch,
+      searchProvider,
+      parallelSearch,
+      searchMaxResult,
+      language,
+    } = useSettingStore.getState();
+    const { networkingModel } = getModel();
     setStatus(t("research.common.research"));
-    const plimit = Plimit(1);
-    for await (const item of queries) {
-      await plimit(async () => {
-        let content = "";
-        const sources: Source[] = [];
-        taskStore.updateTask(item.query, { state: "processing" });
-        const provider = createProvider("google");
-        const searchResult = streamText({
-          model: provider(
-            networkingModel,
-            isNetworkingModel(networkingModel)
-              ? { useSearchGrounding: true }
-              : {}
-          ),
-          system: getSystemPrompt(),
-          prompt: [
-            processSearchResultPrompt(item.query, item.researchGoal),
-            getResponseLanguagePrompt(language),
-          ].join("\n\n"),
-          experimental_transform: smoothStream(),
-          onError: handleError,
-        });
-        for await (const part of searchResult.fullStream) {
-          if (part.type === "text-delta") {
-            content += part.textDelta;
-            taskStore.updateTask(item.query, { learning: content });
-          } else if (part.type === "reasoning") {
-            console.log("reasoning", part.textDelta);
-          } else if (part.type === "source") {
-            sources.push(part.source);
+    const plimit = Plimit(parallelSearch);
+    const createModel = (model: string) => {
+      // Enable Gemini's built-in search tool
+      if (
+        enableSearch &&
+        searchProvider === "model" &&
+        provider === "google" &&
+        isNetworkingModel(model)
+      ) {
+        return createProvider(model, { useSearchGrounding: true });
+      } else {
+        return createProvider(model);
+      }
+    };
+    const getTools = (model: string) => {
+      // Enable OpenAI's built-in search tool
+      if (
+        enableSearch &&
+        searchProvider === "model" &&
+        provider === "openai" &&
+        model.startsWith("gpt-4o")
+      ) {
+        return {
+          web_search_preview: openai.tools.webSearchPreview({
+            // optional configuration:
+            searchContextSize: "medium",
+          }),
+        };
+      } else {
+        return undefined;
+      }
+    };
+    const getProviderOptions = () => {
+      // Enable OpenRouter's built-in search tool
+      if (
+        enableSearch &&
+        searchProvider === "model" &&
+        provider === "openrouter"
+      ) {
+        return {
+          openrouter: {
+            plugins: [
+              {
+                id: "web",
+                max_results: searchMaxResult, // Defaults to 5
+              },
+            ],
+          },
+        };
+      } else {
+        return undefined;
+      }
+    };
+    await Promise.all(
+      queries.map((item) => {
+        plimit(async () => {
+          let content = "";
+          let searchResult;
+          let sources: Source[] = [];
+          taskStore.updateTask(item.query, { state: "processing" });
+          if (enableSearch) {
+            if (searchProvider !== "model") {
+              if (searchProvider === "tavily") {
+                sources = await tavily(item.query);
+              } else if (searchProvider === "firecrawl") {
+                sources = await firecrawl(item.query);
+              }
+              searchResult = streamText({
+                model: createModel(networkingModel),
+                system: getSystemPrompt(),
+                prompt: [
+                  processSearchResultPrompt(
+                    item.query,
+                    item.researchGoal,
+                    sources
+                  ),
+                  getResponseLanguagePrompt(language),
+                ].join("\n\n"),
+                experimental_transform: smoothStream({ delayInMs: 0 }),
+                onError: handleError,
+              });
+            } else {
+              searchResult = streamText({
+                model: createModel(networkingModel),
+                system: getSystemPrompt(),
+                prompt: [
+                  processResultPrompt(item.query, item.researchGoal),
+                  getResponseLanguagePrompt(language),
+                ].join("\n\n"),
+                tools: getTools(networkingModel),
+                providerOptions: getProviderOptions(),
+                experimental_transform: smoothStream({ delayInMs: 0 }),
+                onError: handleError,
+              });
+            }
+          } else {
+            searchResult = streamText({
+              model: createProvider(networkingModel),
+              system: getSystemPrompt(),
+              prompt: [
+                processResultPrompt(item.query, item.researchGoal),
+                getResponseLanguagePrompt(language),
+              ].join("\n\n"),
+              experimental_transform: smoothStream({ delayInMs: 0 }),
+              onError: handleError,
+            });
           }
-        }
-        taskStore.updateTask(item.query, { state: "completed", sources });
-        return content;
-      });
-    }
+          for await (const part of searchResult.fullStream) {
+            if (part.type === "text-delta") {
+              content += part.textDelta;
+              taskStore.updateTask(item.query, { learning: content });
+            } else if (part.type === "reasoning") {
+              console.log("reasoning", part.textDelta);
+            } else if (part.type === "source") {
+              sources.push(part.source);
+            }
+          }
+          taskStore.updateTask(item.query, { state: "completed", sources });
+          return content;
+        });
+      })
+    );
   }
 
   async function reviewSearchResult() {
-    const { thinkingModel, language } = useSettingStore.getState();
+    const { language } = useSettingStore.getState();
     const { query, tasks, suggestion } = useTaskStore.getState();
+    const { thinkingModel } = getModel();
     setStatus(t("research.common.research"));
     const learnings = tasks.map((item) => item.learning);
-    const provider = createProvider("google");
     const result = streamText({
-      model: provider(thinkingModel),
+      model: createProvider(thinkingModel),
       system: getSystemPrompt(),
       prompt: [
         reviewSerpQueriesPrompt(query, learnings, suggestion),
         getResponseLanguagePrompt(language),
       ].join("\n\n"),
-      experimental_transform: smoothStream(),
+      experimental_transform: smoothStream({ delayInMs: 0 }),
       onError: handleError,
     });
 
@@ -161,21 +259,21 @@ function useDeepResearch() {
   }
 
   async function writeFinalReport() {
-    const { thinkingModel, language } = useSettingStore.getState();
-    const { query, tasks, setId, setTitle, setSources } =
+    const { language } = useSettingStore.getState();
+    const { query, tasks, setId, setTitle, setSources, requirement } =
       useTaskStore.getState();
     const { save } = useHistoryStore.getState();
+    const { thinkingModel } = getModel();
     setStatus(t("research.common.writing"));
     const learnings = tasks.map((item) => item.learning);
-    const provider = createProvider("google");
     const result = streamText({
-      model: provider(thinkingModel),
+      model: createProvider(thinkingModel),
       system: [getSystemPrompt(), getOutputGuidelinesPrompt()].join("\n\n"),
       prompt: [
-        writeFinalReportPrompt(query, learnings),
+        writeFinalReportPrompt(query, learnings, requirement),
         getResponseLanguagePrompt(language),
       ].join("\n\n"),
-      experimental_transform: smoothStream(),
+      experimental_transform: smoothStream({ delayInMs: 0 }),
       onError: handleError,
     });
     let content = "";
@@ -199,20 +297,20 @@ function useDeepResearch() {
   }
 
   async function deepResearch() {
-    const { thinkingModel, language } = useSettingStore.getState();
+    const { language } = useSettingStore.getState();
     const { query } = useTaskStore.getState();
+    const { thinkingModel } = getModel();
     setStatus(t("research.common.thinking"));
     try {
       let queries = [];
-      const provider = createProvider("google");
       const result = streamText({
-        model: provider(thinkingModel),
+        model: createProvider(thinkingModel),
         system: getSystemPrompt(),
         prompt: [
           generateSerpQueriesPrompt(query),
           getResponseLanguagePrompt(language),
         ].join("\n\n"),
-        experimental_transform: smoothStream(),
+        experimental_transform: smoothStream({ delayInMs: 0 }),
         onError: handleError,
       });
 

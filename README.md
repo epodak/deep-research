@@ -14,17 +14,18 @@
 
 </div>
 
-**Lightning-Fast Deep Research Reports Powered by Google Gemini**
+**Lightning-Fast Deep Research Report**
 
-Deep Research is a cutting-edge project built with Next.js 15, leveraging the power of Google Gemini models to generate in-depth research reports in approximately 2 minutes. Utilizing advanced "Thinking" and "Flash" models with internet access, Deep Research provides rapid and insightful analysis on a wide range of topics. Your privacy is paramount – all data is processed and stored locally.
+Deep Research is a cutting-edge project built with Next.js 15, leveraging the power of AI models to generate in-depth research reports in approximately 2 minutes. Utilizing advanced "Thinking" and "Flash" models with internet access, Deep Research provides rapid and insightful analysis on a wide range of topics. Your privacy is paramount – all data is processed and stored locally.
 
 ## ✨ Features
 
 - **Rapid Deep Research:** Generates comprehensive research reports in about 2 minutes, significantly accelerating your research process.
 - **Multi-platform Support**: Supports rapid deployment to Vercel, Cloudflare and other platforms.
-- **Powered by Google Gemini:** Utilizes the advanced Google Gemini models for accurate and insightful analysis.
+- **Powered by AI:** Utilizes the advanced AI models for accurate and insightful analysis.
+- **Support for Multi-LLM：** Supports a variety of mainstream large language models, including Gemini, OpenAI, Anthropic, Deepseek, Grok, etc.
 - **Thinking & Networking Models:** Employs sophisticated "Thinking" and "Networking" models to balance depth and speed, ensuring high-quality results quickly. Support switching research models.
-- **Canvas** Supports editing of research content, with two editing modes: WYSIWYM and Markdown. It is possible to adjust the reading level, article length and full text translation.
+- **Artifact** Supports editing of research content, with two editing modes: WYSIWYM and Markdown. It is possible to adjust the reading level, article length and full text translation.
 - **Research History:** Support preservation of research history, you can review previous research results at any time and conduct in-depth research again.
 - **Local & Server API Support:** Offers flexibility with both local and server-side API calling options to suit your needs.
 - **Privacy-Focused:** Your data remains private and secure, as all data is stored locally on your browser.
@@ -37,10 +38,12 @@ Deep Research is a cutting-edge project built with Next.js 15, leveraging the po
 
 - [x] Support preservation of research history
 - [x] Support editing final report and search results
+- [x] Support for other LLM models
 - [ ] Support file upload and local knowledge base
-- [ ] Support for other LLM models
 
 ## 🚀 Getting Started
+
+### Use Gemini
 
 1. Get [Gemini API Key](https://aistudio.google.com/app/apikey)
 2. One-click deployment of the project, you can choose to deploy to Vercel or Cloudflare
@@ -50,6 +53,13 @@ Deep Research is a cutting-edge project built with Next.js 15, leveraging the po
    Currently the project supports deployment to Cloudflare, but you need to follow [How to deploy to Cloudflare Pages](./docs/How-to-deploy-to-Cloudflare-Pages.md) to do it.
 
 3. Start using
+
+### Use Other LLM
+
+1. Deploy the project to Vercel or Cloudflare
+2. Set the LLM API key
+3. Set the LLM API base URL (optional)
+4. Start using
 
 ## ⌨️ Development
 
@@ -77,31 +87,19 @@ Follow these steps to get Deep Research up and running on your local browser.
 
 3. **Set up Environment Variables:**
 
-   Create a `.env` file in the root directory of your project and configure the following environment variables:
+   You need to modify the file `env.tpl` to `.env`, or create a `.env` file and write the variables to this file.
 
-   ```env
-   # (Optional) Server-side Gemini API Key (Required for server API calls)
-   GOOGLE_GENERATIVE_AI_API_KEY=
-
-   # (Optional) Server API Proxy URL. Default, `https://generativelanguage.googleapis.com`
-   API_PROXY_BASE_URL=
-
-   # (Optional) Server API Access Password for enhanced security
-   ACCESS_PASSWORD=
-
-   # (Optional) Injected script code can be used for statistics or error tracking.
-   HEAD_SCRIPTS=
-   ```
+   Please refer to the file `env.tpl` for all available environment variables
 
    **Important Notes on Environment Variables:**
 
-   - `GOOGLE_GENERATIVE_AI_API_KEY`: **Optional but required for using the server-side API.** You need to obtain a Google Generative AI API key from [Google AI Studio](https://aistudio.google.com/). This key should be kept secret and **never committed to your public repository.**
-   - `API_PROXY_BASE_URL`: **Optional.** If you need to use a proxy server for API requests, configure this variable with your proxy server's base URL. This is relevant for server-side API calls.
-   - `ACCESS_PASSWORD`: **Optional but highly recommended for server-side deployments.** Set a strong password to protect your server-side API endpoints. This password will be required to access server-side API functionalities.
-   - `HEAD_SCRIPTS`: **Optional** Injected script code can be used for statistics or error tracking.
+   - **Privacy Reminder:** These environment variables are primarily used for **server-side API calls**. When using the **local API mode**, no API keys or server-side configurations are needed, further enhancing your privacy.
 
-   **Privacy Reminder:** These environment variables are primarily used for **server-side API calls**. When using the **local API mode**, no API keys or server-side configurations are needed, further enhancing your privacy.
-   **Multi-key Support:** Supports multiple keys, each key is separated by `,`, i.e. `key1,key2,key3`. **Cloudflare cannot use multi-key for the time being because the official build script does not support Next.js 15.**
+   - **Multi-key Support:** Supports multiple keys, each key is separated by `,`, i.e. `key1,key2,key3`.
+
+   - **Security Setting:** By setting `ACCESS_PASSWORD`, you can better protect the security of the server API.
+
+   - **Make variables effective:** After adding or modifying this environment variable, please redeploy the project for the changes to take effect.
 
 4. **Run the development server:**
 
@@ -110,6 +108,12 @@ Follow these steps to get Deep Research up and running on your local browser.
    ```
 
    Open your browser and visit [http://localhost:3000](http://localhost:3000) to access Deep Research.
+
+### Custom Model List
+
+The project allow custom model list, but **only works in proxy mode**. Please add an environment variable named `NEXT_PUBLIC_MODEL_LIST` in the `.env` file or environment variables page.
+
+Custom model lists use `,` to separate multiple models. If you want to disable a model, use the `-` symbol followed by the model name, i.e. `-existing-model-name`. To only allow the specified model to be available, use `-all,+new-model-name`.
 
 ## 🚢 Deployment
 

@@ -12,6 +12,10 @@ export function isNetworkingModel(model: string) {
   );
 }
 
+export function isOpenRouterFreeModel(model: string) {
+  return model.endsWith(":free");
+}
+
 export function filterThinkingModelList(modelList: string[]) {
   const thinkingModelList: string[] = [];
   const nonThinkingModelList: string[] = [];
@@ -36,4 +40,58 @@ export function filterNetworkingModelList(modelList: string[]) {
     }
   });
   return [networkingModelList, nonNetworkingModelList];
+}
+
+export function filterOpenRouterModelList(modelList: string[]) {
+  const freeModelList: string[] = [];
+  const paidModelList: string[] = [];
+  modelList.filter((model) => {
+    if (isOpenRouterFreeModel(model)) {
+      freeModelList.push(model);
+    } else {
+      paidModelList.push(model);
+    }
+  });
+  return [freeModelList, paidModelList];
+}
+
+export function filterDeepSeekModelList(modelList: string[]) {
+  const thinkingModelList: string[] = [];
+  const nonThinkingModelList: string[] = [];
+  modelList.filter((model) => {
+    if (model.includes("reasoner")) {
+      thinkingModelList.push(model);
+    } else {
+      nonThinkingModelList.push(model);
+    }
+  });
+  return [thinkingModelList, nonThinkingModelList];
+}
+
+export function filterOpenAIModelList(modelList: string[]) {
+  const networkingModelList: string[] = [];
+  const nonNetworkingModelList: string[] = [];
+  modelList.filter((model) => {
+    if (model.startsWith("gpt-4o")) {
+      networkingModelList.push(model);
+    } else {
+      nonNetworkingModelList.push(model);
+    }
+  });
+  return [networkingModelList, nonNetworkingModelList];
+}
+
+export function getCustomModelList(customModelList: string[]) {
+  const availableModelList: string[] = [];
+  const disabledModelList: string[] = [];
+  customModelList.forEach((model) => {
+    if (model.startsWith("+")) {
+      availableModelList.push(model.substring(1));
+    } else if (model.startsWith("-")) {
+      disabledModelList.push(model.substring(1));
+    } else {
+      availableModelList.push(model);
+    }
+  });
+  return { availableModelList, disabledModelList };
 }

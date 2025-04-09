@@ -93,7 +93,7 @@ function History({ open, onClose }: HistoryProps) {
                       </Button>
                     </TableCell>
                     <TableCell className="text-center whitespace-nowrap">
-                      {formatDate(item.createdAt)}
+                      {formatDate(item.updatedAt || item.createdAt)}
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center">
