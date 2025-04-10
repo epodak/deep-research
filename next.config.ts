@@ -25,6 +25,10 @@ const TAVILY_API_BASE_URL =
   process.env.TAVILY_API_BASE_URL || "https://api.tavily.com";
 const FIRECRAWL_API_BASE_URL =
   process.env.FIRECRAWL_API_BASE_URL || "https://api.firecrawl.dev";
+const BOCHA_API_BASE_URL =
+  process.env.BOCHA_API_BASE_URL || "https://api.bochaai.com";
+const SEARXNG_API_BASE_URL =
+  process.env.SEARXNG_API_BASE_URL || "http://localhost:8080";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -92,6 +96,14 @@ if (BUILD_MODE === "export") {
       {
         source: "/api/search/firecrawl/:path*",
         destination: `${FIRECRAWL_API_BASE_URL}/:path*`,
+      },
+      {
+        source: "/api/search/bocha/:path*",
+        destination: `${BOCHA_API_BASE_URL}/:path*`,
+      },
+      {
+        source: "/api/search/searxng/:path*",
+        destination: `${SEARXNG_API_BASE_URL}/:path*`,
       },
     ];
   };

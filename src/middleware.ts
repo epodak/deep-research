@@ -16,6 +16,7 @@ const OPENAI_COMPATIBLE_API_KEY = process.env.OPENAI_COMPATIBLE_API_KEY || "";
 // Search provider API key
 const TAVILY_API_KEY = process.env.TAVILY_API_KEY || "";
 const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY || "";
+const BOCHA_API_KEY = process.env.BOCHA_API_KEY || "";
 // Disabled Provider
 const DISABLED_AI_PROVIDER = process.env.NEXT_PUBLIC_DISABLED_AI_PROVIDER || "";
 const DISABLED_SEARCH_PROVIDER =
@@ -402,6 +403,61 @@ export async function middleware(request: NextRequest) {
           { status: 500 }
         );
       }
+    }
+  }
+  if (request.nextUrl.pathname.startsWith("/api/search/bocha")) {
+    const authorization = request.headers.get("authorization");
+    if (
+      request.method.toUpperCase() !== "POST" ||
+      isEqual(authorization, null) ||
+      authorization !== `Bearer ${accessPassword}` ||
+      disabledSearchProviders.includes("bocha")
+    ) {
+      return NextResponse.json(
+        { error: ERRORS.NO_PERMISSIONS },
+        { status: 403 }
+      );
+    } else {
+      // Support multi-key polling,
+      const apiKeys = shuffle(BOCHA_API_KEY.split(","));
+      if (apiKeys[0]) {
+        const requestHeaders = new Headers(request.headers);
+        requestHeaders.set("Authorization", `Bearer ${apiKeys[0]}`);
+        return NextResponse.next({
+          request: {
+            headers: requestHeaders,
+          },
+        });
+      } else {
+        return NextResponse.json(
+          {
+            error: ERRORS.NO_API_KEY,
+          },
+          { status: 500 }
+        );
+      }
+    }
+  }
+  if (request.nextUrl.pathname.startsWith("/api/search/searxng")) {
+    const authorization = request.headers.get("authorization");
+    if (
+      request.method.toUpperCase() !== "POST" ||
+      isEqual(authorization, null) ||
+      authorization !== `Bearer ${accessPassword}` ||
+      disabledSearchProviders.includes("searxng")
+    ) {
+      return NextResponse.json(
+        { error: ERRORS.NO_PERMISSIONS },
+        { status: 403 }
+      );
+    } else {
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.delete("Authorization");
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
     }
   }
   return NextResponse.next();

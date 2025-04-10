@@ -45,9 +45,10 @@ import {
   ANTHROPIC_BASE_URL,
   DEEPSEEK_BASE_URL,
   XAI_BASE_URL,
+  OLLAMA_BASE_URL,
   TAVILY_BASE_URL,
   FIRECRAWL_BASE_URL,
-  OLLAMA_BASE_URL,
+  SEARXNG_BASE_URL,
 } from "@/constants/urls";
 import {
   filterThinkingModelList,
@@ -114,6 +115,9 @@ const formSchema = z.object({
   tavilyApiProxy: z.string().optional(),
   firecrawlApiKey: z.string().optional(),
   firecrawlApiProxy: z.string().optional(),
+  bochaApiKey: z.string().optional(),
+  bochaApiProxy: z.string().optional(),
+  searxngApiProxy: z.string().optional(),
   parallelSearch: z.number().min(1).max(5),
   searchMaxResult: z.number().min(1).max(10),
   language: z.string().optional(),
@@ -185,7 +189,6 @@ function Setting({ open, onClose }: SettingProps) {
       const { availableModelList, disabledModelList } = getCustomModelList(
         MODEL_LIST.length > 0 ? MODEL_LIST.split(",") : []
       );
-      console.log(availableModelList, disabledModelList);
       const isAvailableModel = availableModelList.some(
         (availableModel) => availableModel === model
       );
@@ -376,7 +379,7 @@ function Setting({ open, onClose }: SettingProps) {
                             ) : null}
                             {!isDisabledAIProvider("openaicompatible") ? (
                               <SelectItem value="openaicompatible">
-                                OpenAI Compatible
+                                {t("setting.openAICompatible")}
                               </SelectItem>
                             ) : null}
                             {!isDisabledAIProvider("ollama") ? (
@@ -1833,11 +1836,54 @@ function Setting({ open, onClose }: SettingProps) {
                           {t("setting.thinkingModel")}
                           <span className="ml-1 text-red-500">*</span>
                         </FormLabel>
-                        <FormControl className="col-span-3 w-full">
-                          <Input
-                            placeholder={t("setting.modelListPlaceholder")}
-                            {...field}
-                          />
+                        <FormControl>
+                          <div className="col-span-3 flex gap-2">
+                            <Input
+                              className={cn("flex-1", {
+                                hidden: modelList.length > 0,
+                              })}
+                              placeholder={t("setting.modelListPlaceholder")}
+                              {...field}
+                            />
+                            <div
+                              className={cn("flex-1", {
+                                hidden: modelList.length === 0,
+                              })}
+                            >
+                              <Select
+                                defaultValue={field.value}
+                                onValueChange={field.onChange}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue
+                                    placeholder={t(
+                                      "setting.modelListLoadingPlaceholder"
+                                    )}
+                                  />
+                                </SelectTrigger>
+                                <SelectContent className="max-sm:max-h-72">
+                                  {thinkingModelList[1].map((name) => {
+                                    return !isDisabledAIModel(name) ? (
+                                      <SelectItem key={name} value={name}>
+                                        {convertModelName(name)}
+                                      </SelectItem>
+                                    ) : null;
+                                  })}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              disabled={isRefreshing}
+                              onClick={() => fetchModelList()}
+                            >
+                              <RefreshCw
+                                className={isRefreshing ? "animate-spin" : ""}
+                              />
+                            </Button>
+                          </div>
                         </FormControl>
                       </FormItem>
                     )}
@@ -1851,11 +1897,54 @@ function Setting({ open, onClose }: SettingProps) {
                           {t("setting.networkingModel")}
                           <span className="ml-1 text-red-500">*</span>
                         </FormLabel>
-                        <FormControl className="col-span-3 w-full">
-                          <Input
-                            placeholder={t("setting.modelListPlaceholder")}
-                            {...field}
-                          />
+                        <FormControl>
+                          <div className="col-span-3 w-full flex gap-2">
+                            <Input
+                              className={cn("flex-1", {
+                                hidden: modelList.length > 0,
+                              })}
+                              placeholder={t("setting.modelListPlaceholder")}
+                              {...field}
+                            />
+                            <div
+                              className={cn("flex-1", {
+                                hidden: modelList.length === 0,
+                              })}
+                            >
+                              <Select
+                                defaultValue={field.value}
+                                onValueChange={field.onChange}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue
+                                    placeholder={t(
+                                      "setting.modelListLoadingPlaceholder"
+                                    )}
+                                  />
+                                </SelectTrigger>
+                                <SelectContent className="max-sm:max-h-72">
+                                  {networkingModelList[1].map((name) => {
+                                    return !isDisabledAIModel(name) ? (
+                                      <SelectItem key={name} value={name}>
+                                        {convertModelName(name)}
+                                      </SelectItem>
+                                    ) : null;
+                                  })}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              disabled={isRefreshing}
+                              onClick={() => fetchModelList()}
+                            >
+                              <RefreshCw
+                                className={isRefreshing ? "animate-spin" : ""}
+                              />
+                            </Button>
+                          </div>
                         </FormControl>
                       </FormItem>
                     )}
@@ -1966,6 +2055,14 @@ function Setting({ open, onClose }: SettingProps) {
                                 Firecrawl
                               </SelectItem>
                             ) : null}
+                            {!isDisabledSearchProvider("bocha") ? (
+                              <SelectItem value="bocha">
+                                {t("setting.bocha")}
+                              </SelectItem>
+                            ) : null}
+                            {!isDisabledSearchProvider("bocha") ? (
+                              <SelectItem value="searxng">SearXNG</SelectItem>
+                            ) : null}
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -2053,6 +2150,74 @@ function Setting({ open, onClose }: SettingProps) {
                           <FormControl className="col-span-3">
                             <Input
                               placeholder={FIRECRAWL_BASE_URL}
+                              disabled={form.getValues("enableSearch") === "0"}
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div
+                    className={cn("space-y-4", {
+                      hidden: searchProvider !== "bocha",
+                    })}
+                  >
+                    <FormField
+                      control={form.control}
+                      name="bochaApiKey"
+                      render={({ field }) => (
+                        <FormItem className="from-item">
+                          <FormLabel className="col-span-1">
+                            {t("setting.apiKeyLabel")}
+                            <span className="ml-1 text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl className="col-span-3">
+                            <Password
+                              type="text"
+                              placeholder={t("setting.searchApiKeyPlaceholder")}
+                              disabled={form.getValues("enableSearch") === "0"}
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="bochaApiProxy"
+                      render={({ field }) => (
+                        <FormItem className="from-item">
+                          <FormLabel className="col-span-1">
+                            {t("setting.apiUrlLabel")}
+                          </FormLabel>
+                          <FormControl className="col-span-3">
+                            <Input
+                              placeholder={FIRECRAWL_BASE_URL}
+                              disabled={form.getValues("enableSearch") === "0"}
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div
+                    className={cn("space-y-4", {
+                      hidden: searchProvider !== "searxng",
+                    })}
+                  >
+                    <FormField
+                      control={form.control}
+                      name="searxngApiProxy"
+                      render={({ field }) => (
+                        <FormItem className="from-item">
+                          <FormLabel className="col-span-1">
+                            {t("setting.apiUrlLabel")}
+                          </FormLabel>
+                          <FormControl className="col-span-3">
+                            <Input
+                              placeholder={SEARXNG_BASE_URL}
                               disabled={form.getValues("enableSearch") === "0"}
                               {...field}
                             />

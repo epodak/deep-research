@@ -9,3 +9,5 @@ export const OLLAMA_BASE_URL = "http://localhost:11434";
 // Search engine API Base URL
 export const TAVILY_BASE_URL = "https://api.tavily.com";
 export const FIRECRAWL_BASE_URL = "https://api.firecrawl.dev";
+export const BOCHA_BASE_URL = "https://api.bochaai.com";
+export const SEARXNG_BASE_URL = "http://localhost:8080";

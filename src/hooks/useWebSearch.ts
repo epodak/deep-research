@@ -1,5 +1,9 @@
 import { useSettingStore } from "@/store/setting";
-import { TAVILY_BASE_URL, FIRECRAWL_BASE_URL } from "@/constants/urls";
+import {
+  TAVILY_BASE_URL,
+  FIRECRAWL_BASE_URL,
+  SEARXNG_BASE_URL,
+} from "@/constants/urls";
 import { pick, shuffle } from "radash";
 
 type TavilySearchOptions = {
@@ -60,6 +64,73 @@ interface FirecrawlDocument<T = unknown> {
   description?: string;
 }
 
+type BochaSearchOptions = {
+  freshness?:
+    | "oneDay"
+    | "oneWeek"
+    | "oneMonth"
+    | "oneYear"
+    | "noLimit"
+    | string;
+  summary?: boolean;
+  count?: number;
+  page?: number;
+};
+
+type BochaSearchResult = {
+  id: string | null;
+  name: string;
+  url: string;
+  displayUrl: string;
+  snippet: string;
+  summary?: string;
+  siteName: string;
+  siteIcon: string;
+  dateLastCrawled: string;
+  cachedPageUrl: string | null;
+  language: string | null;
+  isFamilyFriendly: boolean | null;
+  isNavigational: boolean | null;
+};
+
+type SearxngSearchOptions = {
+  categories?: string[];
+  engines?: string[];
+  lang?: "auto" | string;
+  pageno?: number;
+  time_range?: "day" | "month" | "year";
+  format?: "json" | "csv" | "rss";
+  results_on_new_tab?: 0 | 1;
+  image_proxy?: boolean;
+  autocomplete?: string;
+  safesearch?: 0 | 1 | 2;
+};
+
+type SearxngSearchResult = {
+  url: string;
+  title: string;
+  content?: string;
+  engine: string;
+  parsed_url: string[];
+  template: "default.html" | "videos.html" | "images.html";
+  engines: string[];
+  positions: number[];
+  publishedDate?: Date | null;
+  thumbnail?: null | string;
+  is_onion?: boolean;
+  score: number;
+  category: string;
+  length?: null | string;
+  duration?: null | string;
+  iframe_src?: string;
+  source?: string;
+  metadata?: string;
+  resolution?: null | string;
+  img_src?: string;
+  thumbnail_src?: string;
+  img_format?: "jpeg" | "Culture Snaxx" | "png";
+};
+
 function useWebSearch() {
   async function tavily(query: string, options: TavilySearchOptions = {}) {
     const {
@@ -95,7 +166,7 @@ function useWebSearch() {
           includeRawContent: false,
           chunksPerSource: 3,
           ...options,
-        } as TavilySearchOptions),
+        }),
       }
     );
     const { results } = await response.json();
@@ -142,7 +213,7 @@ function useWebSearch() {
           },
           timeout: 60000,
           ...options,
-        } as FirecrawlSearchOptions),
+        }),
       }
     );
     const { data } = await response.json();
@@ -155,9 +226,91 @@ function useWebSearch() {
       })) as Source[];
   }
 
+  async function bocha(query: string, options: BochaSearchOptions = {}) {
+    const {
+      mode,
+      bochaApiKey,
+      bochaApiProxy,
+      searchMaxResult,
+      accessPassword,
+    } = useSettingStore.getState();
+
+    const bochaApiKeys = shuffle(bochaApiKey.split(","));
+    const response = await fetch(
+      mode === "local"
+        ? `${bochaApiProxy || TAVILY_BASE_URL}/v1/web-search`
+        : "/api/search/bocha/v1/web-search",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${
+            mode === "local" ? bochaApiKeys[0] : accessPassword
+          }`,
+        },
+        body: JSON.stringify({
+          query,
+          freshness: "noLimit",
+          summary: true,
+          count: searchMaxResult,
+          ...options,
+        }),
+      }
+    );
+    const { data } = await response.json();
+    const results = data.webPages?.value || [];
+    return (results as BochaSearchResult[])
+      .filter((item) => item.snippet && item.url)
+      .map((result) => ({
+        content: result.summary || result.snippet,
+        url: result.url,
+        title: result.name,
+      })) as Source[];
+  }
+
+  async function searxng(query: string, options: SearxngSearchOptions = {}) {
+    const { mode, searxngApiProxy, accessPassword } =
+      useSettingStore.getState();
+
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    if (mode === "proxy") headers["Authorization"] = `Bearer ${accessPassword}`;
+    const params = {
+      q: query,
+      categories: ["general", "web"],
+      engines: ["google", "bing", "duckduckgo", "brave", "arxiv"],
+      lang: "auto",
+      format: "json",
+      autocomplete: "google",
+      ...options,
+    };
+    const searchQuery = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) {
+      searchQuery.append(key, value.toString());
+    }
+    const response = await fetch(
+      `${
+        mode === "local"
+          ? `${searxngApiProxy || SEARXNG_BASE_URL}/search`
+          : "/api/search/searxng/search"
+      }?${searchQuery.toString()}`,
+      {
+        method: "POST",
+        headers,
+      }
+    );
+    const { results = [] } = await response.json();
+    return (results as SearxngSearchResult[])
+      .filter((item) => item.content && item.url)
+      .map((result) => pick(result, ["title", "content", "url"])) as Source[];
+  }
+
   return {
     tavily,
     firecrawl,
+    bocha,
+    searxng,
   };
 }
 

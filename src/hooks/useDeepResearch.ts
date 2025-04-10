@@ -53,7 +53,7 @@ function useDeepResearch() {
   const { t } = useTranslation();
   const taskStore = useTaskStore();
   const { createProvider, getModel } = useModelProvider();
-  const { tavily, firecrawl } = useWebSearch();
+  const { tavily, firecrawl, bocha, searxng } = useWebSearch();
   const [status, setStatus] = useState<string>("");
 
   async function askQuestions() {
@@ -152,10 +152,20 @@ function useDeepResearch() {
           taskStore.updateTask(item.query, { state: "processing" });
           if (enableSearch) {
             if (searchProvider !== "model") {
-              if (searchProvider === "tavily") {
-                sources = await tavily(item.query);
-              } else if (searchProvider === "firecrawl") {
-                sources = await firecrawl(item.query);
+              try {
+                if (searchProvider === "tavily") {
+                  sources = await tavily(item.query);
+                } else if (searchProvider === "firecrawl") {
+                  sources = await firecrawl(item.query);
+                } else if (searchProvider === "bocha") {
+                  sources = await bocha(item.query);
+                } else if (searchProvider === "searxng") {
+                  sources = await searxng(item.query);
+                }
+              } catch (err) {
+                console.error(err);
+                handleError(`[${searchProvider}]: Search failed`);
+                return plimit.clearQueue();
               }
               searchResult = streamText({
                 model: createModel(networkingModel),

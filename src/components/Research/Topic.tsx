@@ -16,6 +16,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import useDeepResearch from "@/hooks/useDeepResearch";
 import useAccurateTimer from "@/hooks/useAccurateTimer";
+import useAiProvider from "@/hooks/useAiProvider";
 import { useGlobalStore } from "@/store/global";
 import { useSettingStore } from "@/store/setting";
 import { useTaskStore } from "@/store/task";
@@ -29,6 +30,7 @@ function Topic() {
   const { t } = useTranslation();
   const taskStore = useTaskStore();
   const { askQuestions } = useDeepResearch();
+  const { hasApiKey } = useAiProvider();
   const {
     formattedTime,
     start: accurateTimerStart,
@@ -48,8 +50,11 @@ function Topic() {
   }, [taskStore.question, form]);
 
   async function handleSubmit(values: z.infer<typeof formSchema>) {
-    const { apiKey, accessPassword } = useSettingStore.getState();
-    if (apiKey || accessPassword) {
+    const { mode, accessPassword } = useSettingStore.getState();
+    if (
+      (mode === "local" && hasApiKey()) ||
+      (mode === "proxy" && accessPassword)
+    ) {
       const { id, setQuestion } = useTaskStore.getState();
       try {
         setIsThinking(true);

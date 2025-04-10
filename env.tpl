@@ -38,6 +38,12 @@ TAVILY_API_BASE_URL=
 FIRECRAWL_API_KEY=
 # (Optional) Server-side Firecrawl API Proxy URL. Default, `https://api.firecrawl.dev`
 FIRECRAWL_API_BASE_URL=
+# (Optional) Server-side Bocha API Key (Required for server API calls)
+BOCHA_API_KEY=
+# (Optional) Server-side Bocha API Proxy URL. Default, `https://api.bochaai.com`
+BOCHA_API_BASE_URL=
+# (Optional) Server-side Searxng API Proxy URL. Default, `http://localhost:8080`
+SEARXNG_API_BASE_URL=
 # (Optional) Server API Access Password for enhanced security
 ACCESS_PASSWORD=
 # (Optional) Injected script code can be used for statistics or error tracking.

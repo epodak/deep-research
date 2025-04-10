@@ -89,18 +89,6 @@ Follow these steps to get Deep Research up and running on your local browser.
 
    You need to modify the file `env.tpl` to `.env`, or create a `.env` file and write the variables to this file.
 
-   Please refer to the file `env.tpl` for all available environment variables
-
-   **Important Notes on Environment Variables:**
-
-   - **Privacy Reminder:** These environment variables are primarily used for **server-side API calls**. When using the **local API mode**, no API keys or server-side configurations are needed, further enhancing your privacy.
-
-   - **Multi-key Support:** Supports multiple keys, each key is separated by `,`, i.e. `key1,key2,key3`.
-
-   - **Security Setting:** By setting `ACCESS_PASSWORD`, you can better protect the security of the server API.
-
-   - **Make variables effective:** After adding or modifying this environment variable, please redeploy the project for the changes to take effect.
-
 4. **Run the development server:**
 
    ```bash
@@ -188,11 +176,17 @@ pnpm build:export
 
 As mentioned in the "Getting Started" section, Deep Research utilizes the following environment variables for server-side API configurations:
 
-- `GOOGLE_GENERATIVE_AI_API_KEY`
-- `API_PROXY_BASE_URL`
-- `ACCESS_PASSWORD`
+Please refer to the file `env.tpl` for all available environment variables.
 
-These variables are **only required if you intend to use the server-side API calling functionality.** For local API calls, no configuration is necessary beyond setting up the project.
+**Important Notes on Environment Variables:**
+
+- **Privacy Reminder:** These environment variables are primarily used for **server-side API calls**. When using the **local API mode**, no API keys or server-side configurations are needed, further enhancing your privacy.
+
+- **Multi-key Support:** Supports multiple keys, each key is separated by `,`, i.e. `key1,key2,key3`.
+
+- **Security Setting:** By setting `ACCESS_PASSWORD`, you can better protect the security of the server API.
+
+- **Make variables effective:** After adding or modifying this environment variable, please redeploy the project for the changes to take effect.
 
 ## 🛡️ Privacy
 

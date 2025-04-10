@@ -226,9 +226,40 @@ function useModelProvider() {
     }
   }
 
+  function hasApiKey() {
+    const { provider } = useSettingStore.getState();
+
+    switch (provider) {
+      case "google":
+        const { apiKey } = useSettingStore.getState();
+        return apiKey;
+      case "openai":
+        const { openAIApiKey } = useSettingStore.getState();
+        return openAIApiKey;
+      case "anthropic":
+        const { anthropicApiKey } = useSettingStore.getState();
+        return anthropicApiKey;
+      case "deepseek":
+        const { deepseekApiKey } = useSettingStore.getState();
+        return deepseekApiKey;
+      case "xai":
+        const { xAIApiKey } = useSettingStore.getState();
+        return xAIApiKey;
+      case "openrouter":
+        const { openRouterApiKey } = useSettingStore.getState();
+        return openRouterApiKey;
+      case "openaicompatible":
+        const { openAICompatibleApiKey } = useSettingStore.getState();
+        return openAICompatibleApiKey;
+      default:
+        throw new Error("Unsupported Provider: " + provider);
+    }
+  }
+
   return {
     createProvider,
     getModel,
+    hasApiKey,
   };
 }
 

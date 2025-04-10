@@ -42,6 +42,9 @@ export interface SettingStore {
   tavilyApiProxy: string;
   firecrawlApiKey: string;
   firecrawlApiProxy: string;
+  bochaApiKey: string;
+  bochaApiProxy: string;
+  searxngApiProxy: string;
   parallelSearch: number;
   searchMaxResult: number;
   language: string;
@@ -94,6 +97,9 @@ export const defaultValues: SettingStore = {
   tavilyApiProxy: "",
   firecrawlApiKey: "",
   firecrawlApiProxy: "",
+  bochaApiKey: "",
+  bochaApiProxy: "",
+  searxngApiProxy: "",
   parallelSearch: 1,
   searchMaxResult: 5,
   language: "",

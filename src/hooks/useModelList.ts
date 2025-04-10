@@ -69,6 +69,7 @@ interface AnthropicModel {
 
 function useModelList() {
   const [modelList, setModelList] = useState<string[]>([]);
+  const { mode } = useSettingStore.getState();
 
   async function refresh(provider: string): Promise<string[]> {
     if (provider === "google") {
@@ -77,17 +78,22 @@ function useModelList() {
         apiProxy,
         accessPassword,
       } = useSettingStore.getState();
+      if (
+        (mode === "local" && !apiKey) ||
+        (mode === "proxy" && !accessPassword)
+      ) {
+        return [];
+      }
       const apiKeys = shuffle(apiKey.split(","));
-      if (!apiKey && !accessPassword) return [];
       const response = await fetch(
-        apiKeys[0]
+        mode === "local"
           ? `${apiProxy || GEMINI_BASE_URL}${
               apiProxy.endsWith("/v1beta") ? "" : "/v1beta"
             }/models`
           : "/api/ai/google/v1beta/models",
         {
           headers: {
-            "x-goog-api-key": apiKeys[0] ? apiKeys[0] : accessPassword,
+            "x-goog-api-key": mode === "local" ? apiKeys[0] : accessPassword,
           },
         }
       );
@@ -107,17 +113,24 @@ function useModelList() {
         openRouterApiProxy,
         accessPassword,
       } = useSettingStore.getState();
+      if (
+        (mode === "local" && !openRouterApiKey) ||
+        (mode === "proxy" && !accessPassword)
+      ) {
+        return [];
+      }
       const apiKeys = shuffle(openRouterApiKey.split(","));
-      if (!openRouterApiKey && !accessPassword) return [];
       const response = await fetch(
-        apiKeys[0]
+        mode === "local"
           ? `${openRouterApiProxy || `${OPENROUTER_BASE_URL}/api`}${
               openRouterApiProxy.endsWith("/v1") ? "" : "/v1"
             }/models`
           : "/api/ai/openrouter/v1/models",
         {
           headers: {
-            authorization: `Bearer ${apiKeys[0] ? apiKeys[0] : accessPassword}`,
+            authorization: `Bearer ${
+              mode === "local" ? apiKeys[0] : accessPassword
+            }`,
           },
         }
       );
@@ -131,16 +144,24 @@ function useModelList() {
         openAIApiProxy,
         accessPassword,
       } = useSettingStore.getState();
+      if (
+        (mode === "local" && !openAIApiKey) ||
+        (mode === "proxy" && !accessPassword)
+      ) {
+        return [];
+      }
       const apiKeys = shuffle(openAIApiKey.split(","));
       const response = await fetch(
-        apiKeys[0]
+        mode === "local"
           ? `${openAIApiProxy || OPENAI_BASE_URL}${
               openAIApiProxy.endsWith("/v1") ? "" : "/v1"
             }/models`
           : "/api/ai/openai/v1/models",
         {
           headers: {
-            authorization: `Bearer ${apiKeys[0] ? apiKeys[0] : accessPassword}`,
+            authorization: `Bearer ${
+              mode === "local" ? apiKeys[0] : accessPassword
+            }`,
           },
         }
       );
@@ -164,9 +185,15 @@ function useModelList() {
         anthropicApiProxy,
         accessPassword,
       } = useSettingStore.getState();
+      if (
+        (mode === "local" && !anthropicApiKey) ||
+        (mode === "proxy" && !accessPassword)
+      ) {
+        return [];
+      }
       const apiKeys = shuffle(anthropicApiKey.split(","));
       const response = await fetch(
-        apiKeys[0]
+        mode === "local"
           ? `${anthropicApiProxy || ANTHROPIC_BASE_URL}${
               anthropicApiProxy.endsWith("/v1") ? "" : "/v1"
             }/models`
@@ -174,7 +201,7 @@ function useModelList() {
         {
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": apiKeys[0] ? apiKeys[0] : accessPassword,
+            "x-api-key": mode === "local" ? apiKeys[0] : accessPassword,
             "Anthropic-Version": "2023-06-01",
             // Avoid cors error
             "anthropic-dangerous-direct-browser-access": "true",
@@ -191,16 +218,24 @@ function useModelList() {
         deepseekApiProxy,
         accessPassword,
       } = useSettingStore.getState();
+      if (
+        (mode === "local" && !deepseekApiKey) ||
+        (mode === "proxy" && !accessPassword)
+      ) {
+        return [];
+      }
       const apiKeys = shuffle(deepseekApiKey.split(","));
       const response = await fetch(
-        apiKeys[0]
+        mode === "local"
           ? `${deepseekApiProxy || DEEPSEEK_BASE_URL}${
               deepseekApiProxy.endsWith("/v1") ? "" : "/v1"
             }/models`
           : "/api/ai/deepseek/v1/models",
         {
           headers: {
-            authorization: `Bearer ${apiKeys[0] ? apiKeys[0] : accessPassword}`,
+            authorization: `Bearer ${
+              mode === "local" ? apiKeys[0] : accessPassword
+            }`,
           },
         }
       );
@@ -214,16 +249,24 @@ function useModelList() {
         xAIApiProxy,
         accessPassword,
       } = useSettingStore.getState();
+      if (
+        (mode === "local" && !xAIApiKey) ||
+        (mode === "proxy" && !accessPassword)
+      ) {
+        return [];
+      }
       const apiKeys = shuffle(xAIApiKey.split(","));
       const response = await fetch(
-        apiKeys[0]
+        mode === "local"
           ? `${xAIApiProxy || XAI_BASE_URL}${
               xAIApiProxy.endsWith("/v1") ? "" : "/v1"
             }/models`
           : "/api/ai/xai/v1/models",
         {
           headers: {
-            authorization: `Bearer ${apiKeys[0] ? apiKeys[0] : accessPassword}`,
+            authorization: `Bearer ${
+              mode === "local" ? apiKeys[0] : accessPassword
+            }`,
           },
         }
       );
@@ -231,6 +274,38 @@ function useModelList() {
       const newModelList = (data as OpenAIModel[])
         .map((item) => item.id)
         .filter((id) => !id.includes("image"));
+      setModelList(newModelList);
+      return newModelList;
+    }
+    if (provider === "openaicompatible") {
+      const {
+        openAICompatibleApiKey = "",
+        openAICompatibleApiProxy,
+        accessPassword,
+      } = useSettingStore.getState();
+      if (
+        (mode === "local" && !openAICompatibleApiKey) ||
+        (mode === "proxy" && !accessPassword)
+      ) {
+        return [];
+      }
+      const apiKeys = shuffle(openAICompatibleApiKey.split(","));
+      const response = await fetch(
+        mode === "local"
+          ? `${openAICompatibleApiProxy || OPENAI_BASE_URL}${
+              openAICompatibleApiProxy.endsWith("/v1") ? "" : "/v1"
+            }/models`
+          : "/api/ai/openaicompatible/v1/models",
+        {
+          headers: {
+            authorization: `Bearer ${
+              mode === "local" ? apiKeys[0] : accessPassword
+            }`,
+          },
+        }
+      );
+      const { data = [] } = await response.json();
+      const newModelList = (data as OpenAIModel[]).map((item) => item.id);
       setModelList(newModelList);
       return newModelList;
     } else {

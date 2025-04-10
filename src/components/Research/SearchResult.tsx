@@ -237,7 +237,7 @@ function SearchResult() {
                         <ol>
                           {item.sources.map((source, idx) => {
                             return (
-                              <li key={idx}>
+                              <li className="ml-2" key={idx}>
                                 <a href={source.url} target="_blank">
                                   {source.title || source.url}
                                 </a>
@@ -278,7 +278,6 @@ function SearchResult() {
               <Button
                 className="w-full mt-4"
                 type="submit"
-                variant="secondary"
                 disabled={isThinking}
               >
                 {isThinking ? (
