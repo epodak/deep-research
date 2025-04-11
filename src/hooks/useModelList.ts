@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSettingStore } from "@/store/setting";
 import {
   GEMINI_BASE_URL,
@@ -7,7 +7,9 @@ import {
   ANTHROPIC_BASE_URL,
   DEEPSEEK_BASE_URL,
   XAI_BASE_URL,
+  OLLAMA_BASE_URL,
 } from "@/constants/urls";
+import { completePath } from "@/utils/url";
 import { shuffle } from "radash";
 
 interface GeminiModel {
@@ -67,9 +69,27 @@ interface AnthropicModel {
   created_at: string;
 }
 
+interface OllamaModel {
+  name: string;
+  modified_at: string;
+  size: number;
+  digest: string;
+  details: {
+    format?: string;
+    family?: string;
+    families?: string | null;
+    parameter_size?: string;
+    quantization_level?: string;
+  };
+}
+
 function useModelList() {
   const [modelList, setModelList] = useState<string[]>([]);
-  const { mode } = useSettingStore.getState();
+  const { mode, provider } = useSettingStore.getState();
+
+  useEffect(() => {
+    setModelList([]);
+  }, [provider]);
 
   async function refresh(provider: string): Promise<string[]> {
     if (provider === "google") {
@@ -87,9 +107,7 @@ function useModelList() {
       const apiKeys = shuffle(apiKey.split(","));
       const response = await fetch(
         mode === "local"
-          ? `${apiProxy || GEMINI_BASE_URL}${
-              apiProxy.endsWith("/v1beta") ? "" : "/v1beta"
-            }/models`
+          ? completePath(apiProxy || GEMINI_BASE_URL, "/v1beta") + "/models"
           : "/api/ai/google/v1beta/models",
         {
           headers: {
@@ -122,9 +140,8 @@ function useModelList() {
       const apiKeys = shuffle(openRouterApiKey.split(","));
       const response = await fetch(
         mode === "local"
-          ? `${openRouterApiProxy || `${OPENROUTER_BASE_URL}/api`}${
-              openRouterApiProxy.endsWith("/v1") ? "" : "/v1"
-            }/models`
+          ? completePath(openRouterApiProxy || OPENROUTER_BASE_URL, "/api/v1") +
+              "/models"
           : "/api/ai/openrouter/v1/models",
         {
           headers: {
@@ -153,9 +170,7 @@ function useModelList() {
       const apiKeys = shuffle(openAIApiKey.split(","));
       const response = await fetch(
         mode === "local"
-          ? `${openAIApiProxy || OPENAI_BASE_URL}${
-              openAIApiProxy.endsWith("/v1") ? "" : "/v1"
-            }/models`
+          ? completePath(openAIApiProxy || OPENAI_BASE_URL, "/v1") + "/models"
           : "/api/ai/openai/v1/models",
         {
           headers: {
@@ -194,9 +209,8 @@ function useModelList() {
       const apiKeys = shuffle(anthropicApiKey.split(","));
       const response = await fetch(
         mode === "local"
-          ? `${anthropicApiProxy || ANTHROPIC_BASE_URL}${
-              anthropicApiProxy.endsWith("/v1") ? "" : "/v1"
-            }/models`
+          ? completePath(anthropicApiProxy || ANTHROPIC_BASE_URL, "/v1") +
+              "/models"
           : "/api/ai/anthropic/v1/models",
         {
           headers: {
@@ -227,9 +241,8 @@ function useModelList() {
       const apiKeys = shuffle(deepseekApiKey.split(","));
       const response = await fetch(
         mode === "local"
-          ? `${deepseekApiProxy || DEEPSEEK_BASE_URL}${
-              deepseekApiProxy.endsWith("/v1") ? "" : "/v1"
-            }/models`
+          ? completePath(deepseekApiProxy || DEEPSEEK_BASE_URL, "/v1") +
+              "/models"
           : "/api/ai/deepseek/v1/models",
         {
           headers: {
@@ -258,9 +271,7 @@ function useModelList() {
       const apiKeys = shuffle(xAIApiKey.split(","));
       const response = await fetch(
         mode === "local"
-          ? `${xAIApiProxy || XAI_BASE_URL}${
-              xAIApiProxy.endsWith("/v1") ? "" : "/v1"
-            }/models`
+          ? completePath(xAIApiProxy || XAI_BASE_URL, "/v1") + "/models"
           : "/api/ai/xai/v1/models",
         {
           headers: {
@@ -276,8 +287,7 @@ function useModelList() {
         .filter((id) => !id.includes("image"));
       setModelList(newModelList);
       return newModelList;
-    }
-    if (provider === "openaicompatible") {
+    } else if (provider === "openaicompatible") {
       const {
         openAICompatibleApiKey = "",
         openAICompatibleApiProxy,
@@ -292,9 +302,8 @@ function useModelList() {
       const apiKeys = shuffle(openAICompatibleApiKey.split(","));
       const response = await fetch(
         mode === "local"
-          ? `${openAICompatibleApiProxy || OPENAI_BASE_URL}${
-              openAICompatibleApiProxy.endsWith("/v1") ? "" : "/v1"
-            }/models`
+          ? completePath(openAICompatibleApiProxy || OPENAI_BASE_URL, "/v1") +
+              "/models"
           : "/api/ai/openaicompatible/v1/models",
         {
           headers: {
@@ -306,6 +315,26 @@ function useModelList() {
       );
       const { data = [] } = await response.json();
       const newModelList = (data as OpenAIModel[]).map((item) => item.id);
+      setModelList(newModelList);
+      return newModelList;
+    } else if (provider === "ollama") {
+      const { ollamaApiProxy, accessPassword } = useSettingStore.getState();
+      if (mode === "proxy" && !accessPassword) {
+        return [];
+      }
+      const headers = new Headers();
+      if (mode === "proxy")
+        headers.set("Authorization", `Bearer ${accessPassword}`);
+      const response = await fetch(
+        mode === "proxy"
+          ? "/api/ai/ollama/api/tags"
+          : completePath(ollamaApiProxy || OLLAMA_BASE_URL, "/api") + "/tags",
+        {
+          headers,
+        }
+      );
+      const { models = [] } = await response.json();
+      const newModelList = (models as OllamaModel[]).map((item) => item.name);
       setModelList(newModelList);
       return newModelList;
     } else {

@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { getCustomModelList } from "@/utils/models";
 import { isEqual, shuffle } from "radash";
 
+const NODE_ENV = process.env.NODE_ENV;
 const accessPassword = process.env.ACCESS_PASSWORD || "";
 // AI provider API key
 const GOOGLE_GENERATIVE_AI_API_KEY =
@@ -16,6 +17,7 @@ const OPENAI_COMPATIBLE_API_KEY = process.env.OPENAI_COMPATIBLE_API_KEY || "";
 // Search provider API key
 const TAVILY_API_KEY = process.env.TAVILY_API_KEY || "";
 const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY || "";
+const EXA_API_KEY = process.env.EXA_API_KEY || "";
 const BOCHA_API_KEY = process.env.BOCHA_API_KEY || "";
 // Disabled Provider
 const DISABLED_AI_PROVIDER = process.env.NEXT_PUBLIC_DISABLED_AI_PROVIDER || "";
@@ -42,6 +44,8 @@ const ERRORS = {
 };
 
 export async function middleware(request: NextRequest) {
+  if (NODE_ENV === "production") console.debug(request);
+
   const disabledAIProviders =
     DISABLED_AI_PROVIDER.length > 0 ? DISABLED_AI_PROVIDER.split(",") : [];
   const disabledSearchProviders =
@@ -94,7 +98,15 @@ export async function middleware(request: NextRequest) {
       // Support multi-key polling,
       const apiKeys = shuffle(GOOGLE_GENERATIVE_AI_API_KEY.split(","));
       if (apiKeys[0]) {
-        const requestHeaders = new Headers(request.headers);
+        const requestHeaders = new Headers();
+        requestHeaders.set(
+          "Content-Type",
+          request.headers.get("Content-Type") || "application/json"
+        );
+        requestHeaders.set(
+          "x-goog-api-client",
+          request.headers.get("x-goog-api-client") || "genai-js/0.24.0"
+        );
         requestHeaders.set("x-goog-api-key", apiKeys[0]);
         return NextResponse.next({
           request: {
@@ -128,7 +140,11 @@ export async function middleware(request: NextRequest) {
       // Support multi-key polling,
       const apiKeys = shuffle(OPENROUTER_API_KEY.split(","));
       if (apiKeys[0]) {
-        const requestHeaders = new Headers(request.headers);
+        const requestHeaders = new Headers();
+        requestHeaders.set(
+          "Content-Type",
+          request.headers.get("Content-Type") || "application/json"
+        );
         requestHeaders.set("Authorization", `Bearer ${apiKeys[0]}`);
         return NextResponse.next({
           request: {
@@ -162,7 +178,11 @@ export async function middleware(request: NextRequest) {
       // Support multi-key polling,
       const apiKeys = shuffle(OPENAI_API_KEY.split(","));
       if (apiKeys[0]) {
-        const requestHeaders = new Headers(request.headers);
+        const requestHeaders = new Headers();
+        requestHeaders.set(
+          "Content-Type",
+          request.headers.get("Content-Type") || "application/json"
+        );
         requestHeaders.set("Authorization", `Bearer ${apiKeys[0]}`);
         return NextResponse.next({
           request: {
@@ -196,8 +216,16 @@ export async function middleware(request: NextRequest) {
       // Support multi-key polling,
       const apiKeys = shuffle(ANTHROPIC_API_KEY.split(","));
       if (apiKeys[0]) {
-        const requestHeaders = new Headers(request.headers);
+        const requestHeaders = new Headers();
+        requestHeaders.set(
+          "Content-Type",
+          request.headers.get("Content-Type") || "application/json"
+        );
         requestHeaders.set("x-api-key", apiKeys[0]);
+        requestHeaders.set(
+          "anthropic-version",
+          request.headers.get("anthropic-version") || "2023-06-01"
+        );
         return NextResponse.next({
           request: {
             headers: requestHeaders,
@@ -230,7 +258,11 @@ export async function middleware(request: NextRequest) {
       // Support multi-key polling,
       const apiKeys = shuffle(DEEPSEEK_API_KEY.split(","));
       if (apiKeys[0]) {
-        const requestHeaders = new Headers(request.headers);
+        const requestHeaders = new Headers();
+        requestHeaders.set(
+          "Content-Type",
+          request.headers.get("Content-Type") || "application/json"
+        );
         requestHeaders.set("Authorization", `Bearer ${apiKeys[0]}`);
         return NextResponse.next({
           request: {
@@ -264,7 +296,11 @@ export async function middleware(request: NextRequest) {
       // Support multi-key polling,
       const apiKeys = shuffle(XAI_API_KEY.split(","));
       if (apiKeys[0]) {
-        const requestHeaders = new Headers(request.headers);
+        const requestHeaders = new Headers();
+        requestHeaders.set(
+          "Content-Type",
+          request.headers.get("Content-Type") || "application/json"
+        );
         requestHeaders.set("Authorization", `Bearer ${apiKeys[0]}`);
         return NextResponse.next({
           request: {
@@ -298,7 +334,11 @@ export async function middleware(request: NextRequest) {
       // Support multi-key polling,
       const apiKeys = shuffle(OPENAI_COMPATIBLE_API_KEY.split(","));
       if (apiKeys[0]) {
-        const requestHeaders = new Headers(request.headers);
+        const requestHeaders = new Headers();
+        requestHeaders.set(
+          "Content-Type",
+          request.headers.get("Content-Type") || "application/json"
+        );
         requestHeaders.set("Authorization", `Bearer ${apiKeys[0]}`);
         return NextResponse.next({
           request: {
@@ -330,8 +370,11 @@ export async function middleware(request: NextRequest) {
         { status: 403 }
       );
     } else {
-      const requestHeaders = new Headers(request.headers);
-      requestHeaders.delete("authorization");
+      const requestHeaders = new Headers();
+      requestHeaders.set(
+        "Content-Type",
+        request.headers.get("Content-Type") || "application/json"
+      );
       return NextResponse.next({
         request: {
           headers: requestHeaders,
@@ -355,7 +398,11 @@ export async function middleware(request: NextRequest) {
       // Support multi-key polling,
       const apiKeys = shuffle(TAVILY_API_KEY.split(","));
       if (apiKeys[0]) {
-        const requestHeaders = new Headers(request.headers);
+        const requestHeaders = new Headers();
+        requestHeaders.set(
+          "Content-Type",
+          request.headers.get("Content-Type") || "application/json"
+        );
         requestHeaders.set("Authorization", `Bearer ${apiKeys[0]}`);
         return NextResponse.next({
           request: {
@@ -388,7 +435,48 @@ export async function middleware(request: NextRequest) {
       // Support multi-key polling,
       const apiKeys = shuffle(FIRECRAWL_API_KEY.split(","));
       if (apiKeys[0]) {
-        const requestHeaders = new Headers(request.headers);
+        const requestHeaders = new Headers();
+        requestHeaders.set(
+          "Content-Type",
+          request.headers.get("Content-Type") || "application/json"
+        );
+        requestHeaders.set("Authorization", `Bearer ${apiKeys[0]}`);
+        return NextResponse.next({
+          request: {
+            headers: requestHeaders,
+          },
+        });
+      } else {
+        return NextResponse.json(
+          {
+            error: ERRORS.NO_API_KEY,
+          },
+          { status: 500 }
+        );
+      }
+    }
+  }
+  if (request.nextUrl.pathname.startsWith("/api/search/exa")) {
+    const authorization = request.headers.get("authorization");
+    if (
+      request.method.toUpperCase() !== "POST" ||
+      isEqual(authorization, null) ||
+      authorization !== `Bearer ${accessPassword}` ||
+      disabledSearchProviders.includes("exa")
+    ) {
+      return NextResponse.json(
+        { error: ERRORS.NO_PERMISSIONS },
+        { status: 403 }
+      );
+    } else {
+      // Support multi-key polling,
+      const apiKeys = shuffle(EXA_API_KEY.split(","));
+      if (apiKeys[0]) {
+        const requestHeaders = new Headers();
+        requestHeaders.set(
+          "Content-Type",
+          request.headers.get("Content-Type") || "application/json"
+        );
         requestHeaders.set("Authorization", `Bearer ${apiKeys[0]}`);
         return NextResponse.next({
           request: {
@@ -421,7 +509,11 @@ export async function middleware(request: NextRequest) {
       // Support multi-key polling,
       const apiKeys = shuffle(BOCHA_API_KEY.split(","));
       if (apiKeys[0]) {
-        const requestHeaders = new Headers(request.headers);
+        const requestHeaders = new Headers();
+        requestHeaders.set(
+          "Content-Type",
+          request.headers.get("Content-Type") || "application/json"
+        );
         requestHeaders.set("Authorization", `Bearer ${apiKeys[0]}`);
         return NextResponse.next({
           request: {
@@ -451,7 +543,11 @@ export async function middleware(request: NextRequest) {
         { status: 403 }
       );
     } else {
-      const requestHeaders = new Headers(request.headers);
+      const requestHeaders = new Headers();
+      requestHeaders.set(
+        "Content-Type",
+        request.headers.get("Content-Type") || "application/json"
+      );
       requestHeaders.delete("Authorization");
       return NextResponse.next({
         request: {

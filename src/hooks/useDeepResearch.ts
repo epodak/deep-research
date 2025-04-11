@@ -53,7 +53,7 @@ function useDeepResearch() {
   const { t } = useTranslation();
   const taskStore = useTaskStore();
   const { createProvider, getModel } = useModelProvider();
-  const { tavily, firecrawl, bocha, searxng } = useWebSearch();
+  const { tavily, firecrawl, exa, bocha, searxng } = useWebSearch();
   const [status, setStatus] = useState<string>("");
 
   async function askQuestions() {
@@ -157,6 +157,8 @@ function useDeepResearch() {
                   sources = await tavily(item.query);
                 } else if (searchProvider === "firecrawl") {
                   sources = await firecrawl(item.query);
+                } else if (searchProvider === "exa") {
+                  sources = await exa(item.query);
                 } else if (searchProvider === "bocha") {
                   sources = await bocha(item.query);
                 } else if (searchProvider === "searxng") {

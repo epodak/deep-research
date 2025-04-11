@@ -186,7 +186,7 @@ function MilkdownEditor(props: EditorProps) {
         ref={markdownEditorRef}
       ></div>
       <FloatingMenu targetRef={containerRef} fixedTopOffset={16}>
-        <div className="flex flex-col gap-1 border rounded-full py-2 p-1 bg-white dark:bg-slate-800 opacity-30 print:hidden hover:opacity-100">
+        <div className="flex flex-col gap-1 border rounded-full py-2 p-1 bg-white dark:bg-slate-800 opacity-50 max-sm:opacity-80 print:hidden hover:opacity-100">
           {mode === "WYSIWYM" ? (
             <Button
               className="float-menu-button"

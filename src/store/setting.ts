@@ -42,6 +42,8 @@ export interface SettingStore {
   tavilyApiProxy: string;
   firecrawlApiKey: string;
   firecrawlApiProxy: string;
+  exaApiKey: string;
+  exaApiProxy: string;
   bochaApiKey: string;
   bochaApiProxy: string;
   searxngApiProxy: string;
@@ -97,6 +99,8 @@ export const defaultValues: SettingStore = {
   tavilyApiProxy: "",
   firecrawlApiKey: "",
   firecrawlApiProxy: "",
+  exaApiKey: "",
+  exaApiProxy: "",
   bochaApiKey: "",
   bochaApiProxy: "",
   searxngApiProxy: "",

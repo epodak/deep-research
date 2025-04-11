@@ -2,8 +2,11 @@ import { useSettingStore } from "@/store/setting";
 import {
   TAVILY_BASE_URL,
   FIRECRAWL_BASE_URL,
+  EXA_BASE_URL,
+  BOCHA_BASE_URL,
   SEARXNG_BASE_URL,
 } from "@/constants/urls";
+import { completePath } from "@/utils/url";
 import { pick, shuffle } from "radash";
 
 type TavilySearchOptions = {
@@ -63,6 +66,76 @@ interface FirecrawlDocument<T = unknown> {
   title?: string;
   description?: string;
 }
+
+type ExaSearchOptions = {
+  useAutoprompt?: boolean;
+  type?: "keyword" | "neural" | "auto";
+  category?:
+    | "company"
+    | "research paper"
+    | "news"
+    | "pdf"
+    | "github"
+    | "tweet"
+    | "personal site"
+    | "linkedin profile"
+    | "financial report";
+  numResults?: number;
+  includeDomains?: string[];
+  excludeDomains?: string[];
+  startCrawlDate?: string;
+  endCrawlDate?: string;
+  startPublishedDate?: string;
+  endPublishedDate?: string;
+  includeText?: string[];
+  excludeText?: string[];
+  contents?: {
+    text?:
+      | boolean
+      | {
+          maxCharacters?: number;
+          includeHtmlTags?: boolean;
+        };
+    highlights?: {
+      numSentences?: number;
+      highlightsPerUrl?: number;
+      query?: string;
+    };
+    summary?:
+      | boolean
+      | {
+          query?: string;
+          schema?: object;
+        };
+    livecrawl?: "never" | "fallback" | "always" | "auto";
+    livecrawlTimeout?: number;
+    subpages?: number;
+    subpageTarget?: string;
+    extras?: {
+      links?: number;
+      imageLinks?: number;
+    };
+  };
+};
+
+type ExaSearchResult = {
+  title: string;
+  url: string;
+  publishedDate: string;
+  author: string;
+  score: number;
+  id: string;
+  image?: string;
+  favicon: string;
+  text?: string;
+  highlights?: string[];
+  highlightScores?: number[];
+  summary?: string;
+  subpages?: ExaSearchResult[];
+  extras?: {
+    links?: string[];
+  };
+};
 
 type BochaSearchOptions = {
   freshness?:
@@ -144,7 +217,7 @@ function useWebSearch() {
     const tavilyApiKeys = shuffle(tavilyApiKey.split(","));
     const response = await fetch(
       mode === "local"
-        ? `${tavilyApiProxy || TAVILY_BASE_URL}/search`
+        ? `${completePath(tavilyApiProxy || TAVILY_BASE_URL)}/search`
         : "/api/search/tavily/search",
       {
         method: "POST",
@@ -192,7 +265,10 @@ function useWebSearch() {
     const languageMeta = language.split("-");
     const response = await fetch(
       mode === "local"
-        ? `${firecrawlApiProxy || FIRECRAWL_BASE_URL}/v1/search`
+        ? `${completePath(
+            firecrawlApiProxy || FIRECRAWL_BASE_URL,
+            "/v1"
+          )}/search`
         : "/api/search/firecrawl/v1/search",
       {
         method: "POST",
@@ -226,6 +302,45 @@ function useWebSearch() {
       })) as Source[];
   }
 
+  async function exa(query: string, options: ExaSearchOptions = {}) {
+    const { mode, exaApiKey, exaApiProxy, searchMaxResult, accessPassword } =
+      useSettingStore.getState();
+
+    const exaApiKeys = shuffle(exaApiKey.split(","));
+    const response = await fetch(
+      mode === "local"
+        ? `${completePath(exaApiProxy || EXA_BASE_URL)}/search`
+        : "/api/search/exa/search",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${
+            mode === "local" ? exaApiKeys[0] : accessPassword
+          }`,
+        },
+        body: JSON.stringify({
+          query,
+          category: "research paper",
+          contents: {
+            text: true,
+            numResults: Number(searchMaxResult) * 5,
+            livecrawl: "auto",
+          },
+          ...options,
+        }),
+      }
+    );
+    const { results } = await response.json();
+    return (results as ExaSearchResult[])
+      .filter((item) => (item.summary || item.text) && item.url)
+      .map((result) => ({
+        content: result.summary || result.text,
+        url: result.url,
+        title: result.title,
+      })) as Source[];
+  }
+
   async function bocha(query: string, options: BochaSearchOptions = {}) {
     const {
       mode,
@@ -238,7 +353,7 @@ function useWebSearch() {
     const bochaApiKeys = shuffle(bochaApiKey.split(","));
     const response = await fetch(
       mode === "local"
-        ? `${bochaApiProxy || TAVILY_BASE_URL}/v1/web-search`
+        ? `${completePath(bochaApiProxy || BOCHA_BASE_URL, "/v1")}/web-search`
         : "/api/search/bocha/v1/web-search",
       {
         method: "POST",
@@ -274,8 +389,8 @@ function useWebSearch() {
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${accessPassword}`,
     };
-    if (mode === "proxy") headers["Authorization"] = `Bearer ${accessPassword}`;
     const params = {
       q: query,
       categories: ["general", "web"],
@@ -289,26 +404,25 @@ function useWebSearch() {
     for (const [key, value] of Object.entries(params)) {
       searchQuery.append(key, value.toString());
     }
+
     const response = await fetch(
       `${
-        mode === "local"
-          ? `${searxngApiProxy || SEARXNG_BASE_URL}/search`
-          : "/api/search/searxng/search"
+        mode === "proxy"
+          ? "/api/search/searxng/search"
+          : `${completePath(searxngApiProxy || SEARXNG_BASE_URL)}/search`
       }?${searchQuery.toString()}`,
-      {
-        method: "POST",
-        headers,
-      }
+      mode === "proxy" ? { method: "POST", headers } : undefined
     );
     const { results = [] } = await response.json();
     return (results as SearxngSearchResult[])
-      .filter((item) => item.content && item.url)
+      .filter((item) => item.content && item.url && item.score >= 0.5)
       .map((result) => pick(result, ["title", "content", "url"])) as Source[];
   }
 
   return {
     tavily,
     firecrawl,
+    exa,
     bocha,
     searxng,
   };

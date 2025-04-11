@@ -15,6 +15,7 @@ import {
   XAI_BASE_URL,
   OLLAMA_BASE_URL,
 } from "@/constants/urls";
+import { completePath } from "@/utils/url";
 import { shuffle } from "radash";
 
 function useModelProvider() {
@@ -28,9 +29,7 @@ function useModelProvider() {
         const google = createGoogleGenerativeAI(
           mode === "local"
             ? {
-                baseURL: `${apiProxy || GEMINI_BASE_URL}${
-                  apiProxy.includes("/v1") ? "" : "/v1beta"
-                }`,
+                baseURL: completePath(apiProxy || GEMINI_BASE_URL, "/v1beta"),
                 apiKey: apiKeys[0],
               }
             : {
@@ -46,9 +45,7 @@ function useModelProvider() {
         const openai = createOpenAI(
           mode === "local"
             ? {
-                baseURL: `${openAIApiProxy || OPENAI_BASE_URL}${
-                  openAIApiProxy.includes("/v1") ? "" : "/v1"
-                }`,
+                baseURL: completePath(openAIApiProxy || OPENAI_BASE_URL, "/v1"),
                 apiKey: openAIApiKeys[0],
               }
             : {
@@ -66,9 +63,10 @@ function useModelProvider() {
         const anthropic = createAnthropic(
           mode === "local"
             ? {
-                baseURL: `${anthropicApiProxy || ANTHROPIC_BASE_URL}${
-                  anthropicApiProxy.includes("/v1") ? "" : "/v1"
-                }`,
+                baseURL: completePath(
+                  anthropicApiProxy || ANTHROPIC_BASE_URL,
+                  "/v1"
+                ),
                 apiKey: anthropicApiKeys[0],
               }
             : {
@@ -84,9 +82,10 @@ function useModelProvider() {
         const deepseek = createDeepSeek(
           mode === "local"
             ? {
-                baseURL: `${deepseekApiProxy || DEEPSEEK_BASE_URL}${
-                  deepseekApiProxy.includes("/v1") ? "" : "/v1"
-                }`,
+                baseURL: completePath(
+                  deepseekApiProxy || DEEPSEEK_BASE_URL,
+                  "/v1"
+                ),
                 apiKey: deepseekApiKeys[0],
               }
             : {
@@ -101,9 +100,7 @@ function useModelProvider() {
         const xai = createXai(
           mode === "local"
             ? {
-                baseURL: `${xAIApiProxy || XAI_BASE_URL}${
-                  xAIApiProxy.includes("/v1") ? "" : "/v1"
-                }`,
+                baseURL: completePath(xAIApiProxy || XAI_BASE_URL, "/v1"),
                 apiKey: xAIApiKeys[0],
               }
             : {
@@ -119,13 +116,14 @@ function useModelProvider() {
         const openrouter = createOpenRouter(
           mode === "local"
             ? {
-                baseURL: `${
-                  openRouterApiProxy || `${OPENROUTER_BASE_URL}/api`
-                }${openRouterApiProxy.includes("/v1") ? "" : "/v1"}`,
+                baseURL: completePath(
+                  openRouterApiProxy || OPENROUTER_BASE_URL,
+                  "/api/v1"
+                ),
                 apiKey: openRouterApiKeys[0],
               }
             : {
-                baseURL: "/api/ai/openrouter/v1",
+                baseURL: "/api/ai/openrouter/api/v1",
                 apiKey: accessPassword,
               }
         );
@@ -139,9 +137,10 @@ function useModelProvider() {
         const openaicompatible = createOpenAI(
           mode === "local"
             ? {
-                baseURL: `${openAICompatibleApiProxy || OPENAI_BASE_URL}${
-                  openAICompatibleApiProxy.includes("/v1") ? "" : "/v1"
-                }`,
+                baseURL: completePath(
+                  openAICompatibleApiProxy || OPENAI_BASE_URL,
+                  "/v1"
+                ),
                 apiKey: openAICompatibleApiKeys[0],
               }
             : { baseURL: "/api/ai/openaicompatible/v1", apiKey: accessPassword }
@@ -149,13 +148,15 @@ function useModelProvider() {
         return openaicompatible(model, settings);
       case "ollama":
         const { ollamaApiProxy } = useSettingStore.getState();
+        const headers: Record<string, string> = {};
+        if (mode === "proxy")
+          headers["Authorization"] = `Bearer ${accessPassword}`;
         const ollama = createOllama({
-          baseURL: accessPassword
-            ? "/api/ai/ollama"
-            : `${ollamaApiProxy || `${OLLAMA_BASE_URL}/api`}`,
-          headers: {
-            Authorization: accessPassword,
-          },
+          baseURL:
+            mode === "local"
+              ? completePath(ollamaApiProxy || OLLAMA_BASE_URL, "/api")
+              : "/api/ai/ollama/api",
+          headers,
         });
         return ollama(model, settings);
       default:
@@ -226,31 +227,33 @@ function useModelProvider() {
     }
   }
 
-  function hasApiKey() {
+  function hasApiKey(): boolean {
     const { provider } = useSettingStore.getState();
 
     switch (provider) {
       case "google":
         const { apiKey } = useSettingStore.getState();
-        return apiKey;
+        return apiKey.length > 0;
       case "openai":
         const { openAIApiKey } = useSettingStore.getState();
-        return openAIApiKey;
+        return openAIApiKey.length > 0;
       case "anthropic":
         const { anthropicApiKey } = useSettingStore.getState();
-        return anthropicApiKey;
+        return anthropicApiKey.length > 0;
       case "deepseek":
         const { deepseekApiKey } = useSettingStore.getState();
-        return deepseekApiKey;
+        return deepseekApiKey.length > 0;
       case "xai":
         const { xAIApiKey } = useSettingStore.getState();
-        return xAIApiKey;
+        return xAIApiKey.length > 0;
       case "openrouter":
         const { openRouterApiKey } = useSettingStore.getState();
-        return openRouterApiKey;
+        return openRouterApiKey.length > 0;
       case "openaicompatible":
         const { openAICompatibleApiKey } = useSettingStore.getState();
-        return openAICompatibleApiKey;
+        return openAICompatibleApiKey.length > 0;
+      case "ollama":
+        return true;
       default:
         throw new Error("Unsupported Provider: " + provider);
     }
