@@ -2187,7 +2187,7 @@ function Setting({ open, onClose }: SettingProps) {
                   </div>
                   <div
                     className={cn("space-y-4", {
-                      hidden: searchProvider !== "tavily",
+                      hidden: searchProvider !== "exa",
                     })}
                   >
                     <FormField
