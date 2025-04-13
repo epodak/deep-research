@@ -384,7 +384,7 @@ function useWebSearch() {
   }
 
   async function searxng(query: string, options: SearxngSearchOptions = {}) {
-    const { mode, searxngApiProxy, accessPassword } =
+    const { mode, searxngApiProxy, searchMaxResult, accessPassword } =
       useSettingStore.getState();
 
     const headers: HeadersInit = {
@@ -415,7 +415,13 @@ function useWebSearch() {
     );
     const { results = [] } = await response.json();
     return (results as SearxngSearchResult[])
-      .filter((item) => item.content && item.url && item.score >= 0.5)
+      .filter(
+        (item, idx) =>
+          item.content &&
+          item.url &&
+          idx < searchMaxResult * 5 &&
+          item.score >= 0.5
+      )
       .map((result) => pick(result, ["title", "content", "url"])) as Source[];
   }
 

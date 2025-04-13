@@ -292,11 +292,7 @@ function Setting({ open, onClose }: SettingProps) {
         <Form {...form}>
           <form className="space-y-4">
             <Tabs defaultValue="llm">
-              <TabsList
-                className={cn("w-full mb-2", {
-                  hidden: BUILD_MODE === "export",
-                })}
-              >
+              <TabsList className="w-full mb-2">
                 <TabsTrigger className="w-1/3" value="llm">
                   {t("setting.model")}
                 </TabsTrigger>
