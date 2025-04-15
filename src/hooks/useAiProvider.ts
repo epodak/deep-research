@@ -15,42 +15,44 @@ import {
   XAI_BASE_URL,
   OLLAMA_BASE_URL,
 } from "@/constants/urls";
+import { multiApiKeyPolling } from "@/utils/model";
+import { generateSignature } from "@/utils/signature";
 import { completePath } from "@/utils/url";
-import { shuffle } from "radash";
 
 function useModelProvider() {
   function createProvider(model: string, settings?: any) {
     const { mode, provider, accessPassword } = useSettingStore.getState();
+    const accessKey = generateSignature(accessPassword, Date.now());
 
     switch (provider) {
       case "google":
         const { apiKey = "", apiProxy } = useSettingStore.getState();
-        const apiKeys = shuffle(apiKey.split(","));
+        const key = multiApiKeyPolling(apiKey);
         const google = createGoogleGenerativeAI(
           mode === "local"
             ? {
                 baseURL: completePath(apiProxy || GEMINI_BASE_URL, "/v1beta"),
-                apiKey: apiKeys[0],
+                apiKey: key,
               }
             : {
                 baseURL: "/api/ai/google/v1beta",
-                apiKey: accessPassword,
+                apiKey: accessKey,
               }
         );
         return google(model, settings);
       case "openai":
         const { openAIApiKey = "", openAIApiProxy } =
           useSettingStore.getState();
-        const openAIApiKeys = shuffle(openAIApiKey.split(","));
+        const openAIKey = multiApiKeyPolling(openAIApiKey);
         const openai = createOpenAI(
           mode === "local"
             ? {
                 baseURL: completePath(openAIApiProxy || OPENAI_BASE_URL, "/v1"),
-                apiKey: openAIApiKeys[0],
+                apiKey: openAIKey,
               }
             : {
                 baseURL: "/api/ai/openai/v1",
-                apiKey: accessPassword,
+                apiKey: accessKey,
               }
         );
         return model.startsWith("gpt-4o")
@@ -59,7 +61,7 @@ function useModelProvider() {
       case "anthropic":
         const { anthropicApiKey = "", anthropicApiProxy } =
           useSettingStore.getState();
-        const anthropicApiKeys = shuffle(anthropicApiKey.split(","));
+        const anthropicKey = multiApiKeyPolling(anthropicApiKey);
         const anthropic = createAnthropic(
           mode === "local"
             ? {
@@ -67,18 +69,18 @@ function useModelProvider() {
                   anthropicApiProxy || ANTHROPIC_BASE_URL,
                   "/v1"
                 ),
-                apiKey: anthropicApiKeys[0],
+                apiKey: anthropicKey,
               }
             : {
                 baseURL: "/api/ai/anthropic/v1",
-                apiKey: accessPassword,
+                apiKey: accessKey,
               }
         );
         return anthropic(model, settings);
       case "deepseek":
         const { deepseekApiKey = "", deepseekApiProxy } =
           useSettingStore.getState();
-        const deepseekApiKeys = shuffle(deepseekApiKey.split(","));
+        const deepseekKey = multiApiKeyPolling(deepseekApiKey);
         const deepseek = createDeepSeek(
           mode === "local"
             ? {
@@ -86,33 +88,33 @@ function useModelProvider() {
                   deepseekApiProxy || DEEPSEEK_BASE_URL,
                   "/v1"
                 ),
-                apiKey: deepseekApiKeys[0],
+                apiKey: deepseekKey,
               }
             : {
                 baseURL: "/api/ai/deepseek/v1",
-                apiKey: accessPassword,
+                apiKey: accessKey,
               }
         );
         return deepseek(model, settings);
       case "xai":
         const { xAIApiKey = "", xAIApiProxy } = useSettingStore.getState();
-        const xAIApiKeys = shuffle(xAIApiKey.split(","));
+        const xAIKey = multiApiKeyPolling(xAIApiKey);
         const xai = createXai(
           mode === "local"
             ? {
                 baseURL: completePath(xAIApiProxy || XAI_BASE_URL, "/v1"),
-                apiKey: xAIApiKeys[0],
+                apiKey: xAIKey,
               }
             : {
                 baseURL: "/api/ai/xai/v1",
-                apiKey: accessPassword,
+                apiKey: accessKey,
               }
         );
         return xai(model, settings);
       case "openrouter":
         const { openRouterApiKey = "", openRouterApiProxy } =
           useSettingStore.getState();
-        const openRouterApiKeys = shuffle(openRouterApiKey.split(","));
+        const openRouterKey = multiApiKeyPolling(openRouterApiKey);
         const openrouter = createOpenRouter(
           mode === "local"
             ? {
@@ -120,20 +122,18 @@ function useModelProvider() {
                   openRouterApiProxy || OPENROUTER_BASE_URL,
                   "/api/v1"
                 ),
-                apiKey: openRouterApiKeys[0],
+                apiKey: openRouterKey,
               }
             : {
                 baseURL: "/api/ai/openrouter/api/v1",
-                apiKey: accessPassword,
+                apiKey: accessKey,
               }
         );
         return openrouter(model, settings);
       case "openaicompatible":
         const { openAICompatibleApiKey = "", openAICompatibleApiProxy } =
           useSettingStore.getState();
-        const openAICompatibleApiKeys = shuffle(
-          openAICompatibleApiKey.split(",")
-        );
+        const openAICompatibleKey = multiApiKeyPolling(openAICompatibleApiKey);
         const openaicompatible = createOpenAI(
           mode === "local"
             ? {
@@ -141,16 +141,15 @@ function useModelProvider() {
                   openAICompatibleApiProxy || OPENAI_BASE_URL,
                   "/v1"
                 ),
-                apiKey: openAICompatibleApiKeys[0],
+                apiKey: openAICompatibleKey,
               }
-            : { baseURL: "/api/ai/openaicompatible/v1", apiKey: accessPassword }
+            : { baseURL: "/api/ai/openaicompatible/v1", apiKey: accessKey }
         );
         return openaicompatible(model, settings);
       case "ollama":
         const { ollamaApiProxy } = useSettingStore.getState();
         const headers: Record<string, string> = {};
-        if (mode === "proxy")
-          headers["Authorization"] = `Bearer ${accessPassword}`;
+        if (mode === "proxy") headers["Authorization"] = `Bearer ${accessKey}`;
         const ollama = createOllama({
           baseURL:
             mode === "local"

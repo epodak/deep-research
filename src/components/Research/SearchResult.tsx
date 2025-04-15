@@ -278,6 +278,7 @@ function SearchResult() {
               <Button
                 className="w-full mt-4"
                 type="submit"
+                variant={taskStore.tasks.length > 0 ? "secondary" : "default"}
                 disabled={isThinking}
               >
                 {isThinking ? (

@@ -22,7 +22,7 @@ function PasswordInput(
       <OriginalInput
         ref={forwardedRef}
         {...props}
-        className="pr-9 w-full"
+        className="pr-9 w-full text-sm"
         type={showPassword ? type : "password"}
       />
       <div className="absolute top-0.5 right-1 w-8 h-8 text-gray-500 cursor-pointer flex justify-center items-center">

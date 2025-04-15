@@ -21,7 +21,7 @@ import {
   writeFinalReportPrompt,
   getSERPQuerySchema,
 } from "@/utils/deep-research";
-import { isNetworkingModel } from "@/utils/models";
+import { isNetworkingModel } from "@/utils/model";
 import { parseError } from "@/utils/error";
 import { pick, flat } from "radash";
 

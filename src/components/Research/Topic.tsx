@@ -50,11 +50,8 @@ function Topic() {
   }, [taskStore.question, form]);
 
   async function handleSubmit(values: z.infer<typeof formSchema>) {
-    const { mode, accessPassword } = useSettingStore.getState();
-    if (
-      (mode === "local" && hasApiKey()) ||
-      (mode === "proxy" && accessPassword)
-    ) {
+    const { mode } = useSettingStore.getState();
+    if ((mode === "local" && hasApiKey()) || mode === "proxy") {
       const { id, setQuestion } = useTaskStore.getState();
       try {
         setIsThinking(true);

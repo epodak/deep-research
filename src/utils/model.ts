@@ -1,3 +1,9 @@
+import { shuffle } from "radash";
+
+export function multiApiKeyPolling(apiKeys = "") {
+  return shuffle(apiKeys.split(","))[0];
+}
+
 export function isThinkingModel(model: string) {
   return model.includes("thinking") || model.startsWith("gemini-2.5-pro");
 }
