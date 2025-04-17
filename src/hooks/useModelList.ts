@@ -7,6 +7,7 @@ import {
   ANTHROPIC_BASE_URL,
   DEEPSEEK_BASE_URL,
   XAI_BASE_URL,
+  POLLINATIONS_BASE_URL,
   OLLAMA_BASE_URL,
 } from "@/constants/urls";
 import { multiApiKeyPolling } from "@/utils/model";
@@ -264,6 +265,25 @@ function useModelList() {
       );
       const { data = [] } = await response.json();
       const newModelList = (data as OpenAIModel[]).map((item) => item.id);
+      setModelList(newModelList);
+      return newModelList;
+    } else if (provider === "pollinations") {
+      const { pollinationsApiProxy } = useSettingStore.getState();
+      const headers = new Headers();
+      if (mode === "proxy") headers.set("Authorization", `Bearer ${accessKey}`);
+      const response = await fetch(
+        mode === "proxy"
+          ? "/api/ai/pollinations/models"
+          : completePath(pollinationsApiProxy || POLLINATIONS_BASE_URL) +
+              "/models",
+        {
+          headers,
+        }
+      );
+      const { data = [] } = await response.json();
+      const newModelList = (data as OpenAIModel[])
+        .map((item) => item.id)
+        .filter((name) => !name.includes("audio"));
       setModelList(newModelList);
       return newModelList;
     } else if (provider === "ollama") {

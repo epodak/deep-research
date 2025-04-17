@@ -361,6 +361,36 @@ export async function middleware(request: NextRequest) {
       }
     }
   }
+  // The pollinations model only verifies access to the backend API
+  if (request.nextUrl.pathname.startsWith("/api/ai/pollinations")) {
+    const authorization = request.headers.get("authorization") || "";
+    const isDisabledModel = await hasDisabledAIModel();
+    if (
+      !verifySignature(
+        authorization.substring(7),
+        accessPassword,
+        Date.now()
+      ) ||
+      disabledAIProviders.includes("pollinations") ||
+      isDisabledModel
+    ) {
+      return NextResponse.json(
+        { error: ERRORS.NO_PERMISSIONS },
+        { status: 403 }
+      );
+    } else {
+      const requestHeaders = new Headers();
+      requestHeaders.set(
+        "Content-Type",
+        request.headers.get("Content-Type") || "application/json"
+      );
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
+    }
+  }
   // The ollama model only verifies access to the backend API
   if (request.nextUrl.pathname.startsWith("/api/ai/ollama")) {
     const authorization = request.headers.get("authorization") || "";

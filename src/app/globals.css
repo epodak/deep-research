@@ -114,6 +114,12 @@
   }
 }
 
+@page {
+  size: "A4";
+  /* Hide print header and footer */
+  margin: 0mm;
+}
+
 .float-menu-button {
   @apply w-8 h-8 hover:bg-transparent text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-slate-50;
 }

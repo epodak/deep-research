@@ -14,6 +14,7 @@ import {
   DEEPSEEK_BASE_URL,
   XAI_BASE_URL,
   OLLAMA_BASE_URL,
+  POLLINATIONS_BASE_URL,
 } from "@/constants/urls";
 import { multiApiKeyPolling } from "@/utils/model";
 import { generateSignature } from "@/utils/signature";
@@ -70,6 +71,10 @@ function useModelProvider() {
                   "/v1"
                 ),
                 apiKey: anthropicKey,
+                headers: {
+                  // Avoid cors error
+                  "anthropic-dangerous-direct-browser-access": "true",
+                },
               }
             : {
                 baseURL: "/api/ai/anthropic/v1",
@@ -142,20 +147,63 @@ function useModelProvider() {
                   "/v1"
                 ),
                 apiKey: openAICompatibleKey,
+                compatibility: "compatible",
               }
-            : { baseURL: "/api/ai/openaicompatible/v1", apiKey: accessKey }
+            : {
+                baseURL: "/api/ai/openaicompatible/v1",
+                apiKey: accessKey,
+                compatibility: "compatible",
+              }
         );
         return openaicompatible(model, settings);
+      case "pollinations":
+        const { pollinationsApiProxy } = useSettingStore.getState();
+        const pollinations = createOpenAI(
+          mode === "local"
+            ? {
+                baseURL: completePath(
+                  pollinationsApiProxy || POLLINATIONS_BASE_URL,
+                  "/v1"
+                ),
+                apiKey: "",
+                compatibility: "compatible",
+                fetch: async (input, init) => {
+                  const headers = (init?.headers || {}) as Record<
+                    string,
+                    string
+                  >;
+                  delete headers["Authorization"];
+                  return await fetch(input, {
+                    ...init,
+                    headers,
+                    credentials: "omit",
+                  });
+                },
+              }
+            : {
+                baseURL: "/api/ai/pollinations",
+                apiKey: accessKey,
+                compatibility: "compatible",
+              }
+        );
+        return pollinations(model, settings);
       case "ollama":
         const { ollamaApiProxy } = useSettingStore.getState();
-        const headers: Record<string, string> = {};
-        if (mode === "proxy") headers["Authorization"] = `Bearer ${accessKey}`;
+        const ollamaHeaders: Record<string, string> = {};
+        if (mode === "proxy")
+          ollamaHeaders["Authorization"] = `Bearer ${accessKey}`;
         const ollama = createOllama({
           baseURL:
             mode === "local"
               ? completePath(ollamaApiProxy || OLLAMA_BASE_URL, "/api")
               : "/api/ai/ollama/api",
-          headers,
+          headers: ollamaHeaders,
+          fetch: async (input, init) => {
+            return await fetch(input, {
+              ...init,
+              credentials: "omit",
+            });
+          },
         });
         return ollama(model, settings);
       default:
@@ -214,6 +262,13 @@ function useModelProvider() {
           thinkingModel: openAICompatibleThinkingModel,
           networkingModel: openAICompatibleNetworkingModel,
         };
+      case "pollinations":
+        const { pollinationsThinkingModel, pollinationsNetworkingModel } =
+          useSettingStore.getState();
+        return {
+          thinkingModel: pollinationsThinkingModel,
+          networkingModel: pollinationsNetworkingModel,
+        };
       case "ollama":
         const { ollamaThinkingModel, ollamaNetworkingModel } =
           useSettingStore.getState();
@@ -251,6 +306,7 @@ function useModelProvider() {
       case "openaicompatible":
         const { openAICompatibleApiKey } = useSettingStore.getState();
         return openAICompatibleApiKey.length > 0;
+      case "pollinations":
       case "ollama":
         return true;
       default:

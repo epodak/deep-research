@@ -236,3 +236,10 @@ export function writeFinalReportPrompt(
     `You need to write this report like a human researcher. Humans don not wrap their writing in markdown blocks. Contains diverse data information such as table, katex formulas, mermaid diagrams, etc. in the form of markdown syntax. **DO NOT** output anything other than report.`,
   ].join("\n\n");
 }
+
+export function informationCollectorPrompt(query: string) {
+  return [
+    `Given the following query from the user:\n<query>${query}</query>`,
+    "You are an information collector who is good at summarizing article contents. Please read the main text repeatedly and extract the main points of the main text based on the user's query. Make sure to include any entities like people, places, companies, products, things, etc in the learnings, as well as any specific entities, metrics, numbers, and dates when available.",
+  ].join("\n\n");
+}

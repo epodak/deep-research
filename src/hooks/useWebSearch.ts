@@ -6,6 +6,7 @@ import {
   BOCHA_BASE_URL,
   SEARXNG_BASE_URL,
 } from "@/constants/urls";
+import { informationCollectorPrompt } from "@/utils/deep-research";
 import { multiApiKeyPolling } from "@/utils/model";
 import { generateSignature } from "@/utils/signature";
 import { completePath } from "@/utils/url";
@@ -228,6 +229,7 @@ function useWebSearch() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${mode === "local" ? tavilyKey : accessKey}`,
         },
+        credentials: "omit",
         body: JSON.stringify({
           query,
           searchDepth: "basic",
@@ -280,6 +282,7 @@ function useWebSearch() {
             mode === "local" ? firecrawlKey : accessKey
           }`,
         },
+        credentials: "omit",
         body: JSON.stringify({
           query,
           lang: languageMeta[0].toLowerCase(),
@@ -320,11 +323,15 @@ function useWebSearch() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${mode === "local" ? exaKey : accessKey}`,
         },
+        credentials: "omit",
         body: JSON.stringify({
           query,
           category: "research paper",
           contents: {
             text: true,
+            summary: {
+              query: informationCollectorPrompt(query),
+            },
             numResults: Number(searchMaxResult) * 5,
             livecrawl: "auto",
           },
@@ -363,6 +370,7 @@ function useWebSearch() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${mode === "local" ? bochaKey : accessKey}`,
         },
+        credentials: "omit",
         body: JSON.stringify({
           query,
           freshness: "noLimit",
@@ -412,7 +420,9 @@ function useWebSearch() {
           ? "/api/search/searxng/search"
           : `${completePath(searxngApiProxy || SEARXNG_BASE_URL)}/search`
       }?${searchQuery.toString()}`,
-      mode === "proxy" ? { method: "POST", headers } : undefined
+      mode === "proxy"
+        ? { method: "POST", credentials: "omit", headers }
+        : { credentials: "omit" }
     );
     const { results = [] } = await response.json();
     return (results as SearxngSearchResult[])

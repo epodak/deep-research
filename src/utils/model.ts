@@ -87,6 +87,23 @@ export function filterOpenAIModelList(modelList: string[]) {
   return [networkingModelList, nonNetworkingModelList];
 }
 
+export function filterPollinationsModelList(modelList: string[]) {
+  const recommendModelList: string[] = [];
+  const normalModelList: string[] = [];
+  modelList.filter((model) => {
+    if (
+      model.startsWith("openai") ||
+      model.startsWith("deepseek") ||
+      model.startsWith("searchgpt")
+    ) {
+      recommendModelList.push(model);
+    } else {
+      normalModelList.push(model);
+    }
+  });
+  return [recommendModelList, normalModelList];
+}
+
 export function getCustomModelList(customModelList: string[]) {
   const availableModelList: string[] = [];
   const disabledModelList: string[] = [];

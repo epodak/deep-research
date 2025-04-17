@@ -38,6 +38,9 @@ OPENAI_COMPATIBLE_API_KEY=
 # (Optional) Server-side Compatible with OpenAI API Proxy URL.
 OPENAI_COMPATIBLE_API_BASE_URL=
 
+# (Optional) Server-side pollinations.ai API Proxy URL. Default, `https://text.pollinations.ai/openai`
+POLLINATIONS_API_BASE_URL=
+
 # (Optional) Server-side Ollama API Proxy URL. Default, `http://0.0.0.0:11434`
 OLLAMA_API_BASE_URL=
 

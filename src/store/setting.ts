@@ -30,6 +30,9 @@ export interface SettingStore {
   openAICompatibleApiProxy: string;
   openAICompatibleThinkingModel: string;
   openAICompatibleNetworkingModel: string;
+  pollinationsApiProxy: string;
+  pollinationsThinkingModel: string;
+  pollinationsNetworkingModel: string;
   ollamaApiProxy: string;
   ollamaThinkingModel: string;
   ollamaNetworkingModel: string;
@@ -89,6 +92,9 @@ export const defaultValues: SettingStore = {
   openAICompatibleApiProxy: "",
   openAICompatibleThinkingModel: "",
   openAICompatibleNetworkingModel: "",
+  pollinationsApiProxy: "",
+  pollinationsThinkingModel: "",
+  pollinationsNetworkingModel: "",
   ollamaApiProxy: "",
   ollamaThinkingModel: "",
   ollamaNetworkingModel: "",

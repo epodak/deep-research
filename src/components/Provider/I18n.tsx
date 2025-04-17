@@ -16,7 +16,9 @@ function I18Provider({ children }: { children: React.ReactNode }) {
     } else {
       i18n.changeLanguage(language);
     }
+    document.documentElement.setAttribute("lang", language);
   }, [language]);
+
   return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
 }
 

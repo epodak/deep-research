@@ -16,10 +16,13 @@ const ANTHROPIC_API_BASE_URL =
 const DEEPSEEK_API_BASE_URL =
   process.env.DEEPSEEK_API_BASE_URL || "https://api.deepseek.com";
 const XAI_API_BASE_URL = process.env.XAI_API_BASE_URL || "https://api.x.ai";
-const OLLAMA_API_BASE_URL =
-  process.env.OLLAMA_API_BASE_URL || "http://0.0.0.0:11434";
 const OPENAI_COMPATIBLE_API_BASE_URL =
   process.env.OPENAI_COMPATIBLE_API_BASE_URL || "";
+const POLLINATIONS_API_BASE_URL =
+  process.env.POLLINATIONS_API_BASE_URL ||
+  "https://text.pollinations.ai/openai";
+const OLLAMA_API_BASE_URL =
+  process.env.OLLAMA_API_BASE_URL || "http://0.0.0.0:11434";
 // Search provider API base url
 const TAVILY_API_BASE_URL =
   process.env.TAVILY_API_BASE_URL || "https://api.tavily.com";
@@ -91,6 +94,10 @@ if (BUILD_MODE === "export") {
       {
         source: "/api/ai/openaicompatible/:path*",
         destination: `${OPENAI_COMPATIBLE_API_BASE_URL}/:path*`,
+      },
+      {
+        source: "/api/ai/pollinations/:path*",
+        destination: `${POLLINATIONS_API_BASE_URL}/:path*`,
       },
       {
         source: "/api/ai/ollama/:path*",

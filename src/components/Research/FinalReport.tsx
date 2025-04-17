@@ -111,7 +111,7 @@ function FinalReport() {
         {t("research.finalReport.title")}
       </h3>
       {taskStore.finalReport !== "" ? (
-        <article id="final-report" className="mb-6 border-b">
+        <article className="border-b">
           <MilkdownEditor
             className="min-h-72"
             value={taskStore.finalReport}
@@ -197,7 +197,7 @@ function FinalReport() {
       ) : null}
       {taskFinished ? (
         <Form {...form}>
-          <form className="pt-3" onSubmit={form.handleSubmit(handleSubmit)}>
+          <form className="mt-4" onSubmit={form.handleSubmit(handleSubmit)}>
             <FormField
               control={form.control}
               name="requirement"

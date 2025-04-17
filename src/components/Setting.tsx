@@ -58,6 +58,7 @@ import {
   ANTHROPIC_BASE_URL,
   DEEPSEEK_BASE_URL,
   XAI_BASE_URL,
+  POLLINATIONS_BASE_URL,
   OLLAMA_BASE_URL,
   TAVILY_BASE_URL,
   FIRECRAWL_BASE_URL,
@@ -71,6 +72,7 @@ import {
   filterOpenRouterModelList,
   filterDeepSeekModelList,
   filterOpenAIModelList,
+  filterPollinationsModelList,
   getCustomModelList,
 } from "@/utils/model";
 import { researchStore } from "@/utils/storage";
@@ -120,6 +122,9 @@ const formSchema = z.object({
   openAICompatibleApiProxy: z.string().optional(),
   openAICompatibleThinkingModel: z.string().optional(),
   openAICompatibleNetworkingModel: z.string().optional(),
+  pollinationsApiProxy: z.string().optional(),
+  pollinationsThinkingModel: z.string().optional(),
+  pollinationsNetworkingModel: z.string().optional(),
   ollamaApiProxy: z.string().optional(),
   ollamaThinkingModel: z.string().optional(),
   ollamaNetworkingModel: z.string().optional(),
@@ -161,22 +166,26 @@ function HelpTip({ children, tip }: { children: ReactNode; tip: string }) {
   };
 
   return (
-    <TooltipProvider delayDuration={100}>
-      <Tooltip open={open} onOpenChange={(opened) => setOpen(opened)}>
-        <TooltipTrigger asChild>
-          <div
-            className="cursor-help flex items-center"
-            onClick={() => handleOpen()}
-          >
-            <span className="flex-1">{children}</span>
-            <CircleHelp className="w-4 h-4 ml-1 opacity-50 max-sm:ml-0" />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-60">
-          <p>{tip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className="flex items-center">
+      <span className="flex-1">{children}</span>
+      <TooltipProvider delayDuration={100}>
+        <Tooltip open={open} onOpenChange={(opened) => setOpen(opened)}>
+          <TooltipTrigger asChild>
+            <CircleHelp
+              className="cursor-help w-4 h-4 ml-1 opacity-50 max-sm:ml-0"
+              onClick={(ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                handleOpen();
+              }}
+            />
+          </TooltipTrigger>
+          <TooltipContent className="max-w-52">
+            <p>{tip}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
   );
 }
 
@@ -195,6 +204,8 @@ function Setting({ open, onClose }: SettingProps) {
       return filterOpenRouterModelList(modelList);
     } else if (provider === "deepseek") {
       return filterDeepSeekModelList(modelList);
+    } else if (provider === "pollinations") {
+      return filterPollinationsModelList(modelList);
     }
     return [[], modelList];
   }, [modelList]);
@@ -206,6 +217,8 @@ function Setting({ open, onClose }: SettingProps) {
       return filterOpenRouterModelList(modelList);
     } else if (provider === "openai") {
       return filterOpenAIModelList(modelList);
+    } else if (provider === "pollinations") {
+      return filterPollinationsModelList(modelList);
     }
     return [[], modelList];
   }, [modelList]);
@@ -440,6 +453,11 @@ function Setting({ open, onClose }: SettingProps) {
                             {!isDisabledAIProvider("openaicompatible") ? (
                               <SelectItem value="openaicompatible">
                                 {t("setting.openAICompatible")}
+                              </SelectItem>
+                            ) : null}
+                            {!isDisabledAIProvider("pollinations") ? (
+                              <SelectItem value="pollinations">
+                                Pollinations ({t("setting.free")})
                               </SelectItem>
                             ) : null}
                             {!isDisabledAIProvider("ollama") ? (
@@ -836,6 +854,35 @@ function Setting({ open, onClose }: SettingProps) {
                                 updateSetting(
                                   "openAICompatibleApiProxy",
                                   form.getValues("openAICompatibleApiProxy")
+                                )
+                              }
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div
+                    className={cn("space-y-4", {
+                      hidden: provider !== "pollinations",
+                    })}
+                  >
+                    <FormField
+                      control={form.control}
+                      name="pollinationsApiProxy"
+                      render={({ field }) => (
+                        <FormItem className="from-item">
+                          <FormLabel className="col-span-1">
+                            {t("setting.apiUrlLabel")}
+                          </FormLabel>
+                          <FormControl className="col-span-3">
+                            <Input
+                              placeholder={POLLINATIONS_BASE_URL}
+                              {...field}
+                              onBlur={() =>
+                                updateSetting(
+                                  "pollinationsApiProxy",
+                                  form.getValues("pollinationsApiProxy")
                                 )
                               }
                             />
@@ -2018,6 +2065,180 @@ function Setting({ open, onClose }: SettingProps) {
                 </div>
                 <div
                   className={cn("space-y-4", {
+                    hidden: provider !== "pollinations",
+                  })}
+                >
+                  <FormField
+                    control={form.control}
+                    name="pollinationsThinkingModel"
+                    render={({ field }) => (
+                      <FormItem className="from-item">
+                        <FormLabel className="col-span-1">
+                          <HelpTip tip={t("setting.thinkingModelTip")}>
+                            {t("setting.thinkingModel")}
+                            <span className="ml-1 text-red-500 max-sm:hidden">
+                              *
+                            </span>
+                          </HelpTip>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="col-span-3 w-full">
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger
+                                className={cn({
+                                  hidden: modelList.length === 0,
+                                })}
+                              >
+                                <SelectValue
+                                  placeholder={t(
+                                    "setting.modelListLoadingPlaceholder"
+                                  )}
+                                />
+                              </SelectTrigger>
+                              <SelectContent className="max-sm:max-h-72">
+                                {thinkingModelList[0].length > 0 ? (
+                                  <SelectGroup>
+                                    <SelectLabel>
+                                      {t("setting.recommendedModels")}
+                                    </SelectLabel>
+                                    {thinkingModelList[0].map((name) => {
+                                      return !isDisabledAIModel(name) ? (
+                                        <SelectItem key={name} value={name}>
+                                          {convertModelName(name)}
+                                        </SelectItem>
+                                      ) : null;
+                                    })}
+                                  </SelectGroup>
+                                ) : null}
+                                <SelectGroup>
+                                  <SelectLabel>
+                                    {t("setting.basicModels")}
+                                  </SelectLabel>
+                                  {thinkingModelList[1].map((name) => {
+                                    return !isDisabledAIModel(name) ? (
+                                      <SelectItem key={name} value={name}>
+                                        {convertModelName(name)}
+                                      </SelectItem>
+                                    ) : null;
+                                  })}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              className={cn("w-full", {
+                                hidden: modelList.length > 0,
+                              })}
+                              type="button"
+                              variant="outline"
+                              disabled={isRefreshing}
+                              onClick={() => fetchModelList()}
+                            >
+                              {isRefreshing ? (
+                                <>
+                                  <RefreshCw className="animate-spin" />{" "}
+                                  {t("setting.modelListLoading")}
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw /> {t("setting.refresh")}
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="pollinationsNetworkingModel"
+                    render={({ field }) => (
+                      <FormItem className="from-item">
+                        <FormLabel className="col-span-1">
+                          <HelpTip tip={t("setting.networkingModelTip")}>
+                            {t("setting.networkingModel")}
+                            <span className="ml-1 text-red-500 max-sm:hidden">
+                              *
+                            </span>
+                          </HelpTip>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="col-span-3 w-full">
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger
+                                className={cn({
+                                  hidden: modelList.length === 0,
+                                })}
+                              >
+                                <SelectValue
+                                  placeholder={t(
+                                    "setting.modelListLoadingPlaceholder"
+                                  )}
+                                />
+                              </SelectTrigger>
+                              <SelectContent className="max-sm:max-h-72">
+                                {networkingModelList[0].length > 0 ? (
+                                  <SelectGroup>
+                                    <SelectLabel>
+                                      {t("setting.recommendedModels")}
+                                    </SelectLabel>
+                                    {networkingModelList[0].map((name) => {
+                                      return !isDisabledAIModel(name) ? (
+                                        <SelectItem key={name} value={name}>
+                                          {convertModelName(name)}
+                                        </SelectItem>
+                                      ) : null;
+                                    })}
+                                  </SelectGroup>
+                                ) : null}
+                                <SelectGroup>
+                                  <SelectLabel>
+                                    {t("setting.basicModels")}
+                                  </SelectLabel>
+                                  {networkingModelList[1].map((name) => {
+                                    return !isDisabledAIModel(name) ? (
+                                      <SelectItem key={name} value={name}>
+                                        {convertModelName(name)}
+                                      </SelectItem>
+                                    ) : null;
+                                  })}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              className={cn("w-full", {
+                                hidden: modelList.length > 0,
+                              })}
+                              type="button"
+                              variant="outline"
+                              disabled={isRefreshing}
+                              onClick={() => fetchModelList()}
+                            >
+                              {isRefreshing ? (
+                                <>
+                                  <RefreshCw className="animate-spin" />{" "}
+                                  {t("setting.modelListLoading")}
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw /> {t("setting.refresh")}
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div
+                  className={cn("space-y-4", {
                     hidden: provider !== "ollama",
                   })}
                 >
@@ -2219,7 +2440,8 @@ function Setting({ open, onClose }: SettingProps) {
                                 Firecrawl
                               </SelectItem>
                             ) : null}
-                            {!isDisabledSearchProvider("exa") ? (
+                            {!isDisabledSearchProvider("exa") &&
+                            mode === "proxy" ? (
                               <SelectItem value="exa">Exa</SelectItem>
                             ) : null}
                             {!isDisabledSearchProvider("bocha") ? (

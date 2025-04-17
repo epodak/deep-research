@@ -189,6 +189,12 @@ Please refer to the file `env.tpl` for all available environment variables.
 
 - **Make variables effective:** After adding or modifying this environment variable, please redeploy the project for the changes to take effect.
 
+## 🙋 FAQs
+
+- Why does my Ollama or SearXNG not work properly and displays the error `TypeError: Failed to fetch`?
+
+If your request generates `CORS` due to browser security restrictions, you need to configure parameters for Ollama or SearXNG to allow cross-domain requests. You can also consider using the server proxy mode, which is a backend server that makes requests, which can effectively avoid cross-domain issues.
+
 ## 🛡️ Privacy
 
 Deep Research is designed with your privacy in mind. **All research data and generated reports are stored locally on your machine.** We do not collect or transmit any of your research data to external servers (unless you are explicitly using server-side API calls, in which case data is sent to Google's Gemini API through your configured proxy if any). Your privacy is our priority.

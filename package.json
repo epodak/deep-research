@@ -1,7 +1,7 @@
 {
   "name": "deep-research",
   "description": "Use any LLMs (Large Language Models) for Deep Research.",
-  "version": "0.7.9",
+  "version": "0.7.11",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
