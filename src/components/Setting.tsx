@@ -144,6 +144,7 @@ const formSchema = z.object({
   searchMaxResult: z.number().min(1).max(10),
   language: z.string().optional(),
   theme: z.string().optional(),
+  debug: z.string().optional(),
 });
 
 function convertModelName(name: string) {
@@ -2738,7 +2739,9 @@ function Setting({ open, onClose }: SettingProps) {
                   render={({ field }) => (
                     <FormItem className="from-item">
                       <FormLabel className="col-span-1">
-                        {t("setting.language")}
+                        <HelpTip tip={t("setting.languageTip")}>
+                          {t("setting.language")}
+                        </HelpTip>
                       </FormLabel>
                       <FormControl>
                         <Select
@@ -2780,6 +2783,34 @@ function Setting({ open, onClose }: SettingProps) {
                             </SelectItem>
                             <SelectItem value="dark">
                               {t("setting.dark")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="debug"
+                  render={({ field }) => (
+                    <FormItem className="from-item">
+                      <FormLabel className="col-span-1">
+                        <HelpTip tip={t("setting.debugTip")}>
+                          {t("setting.debug")}
+                        </HelpTip>
+                      </FormLabel>
+                      <FormControl>
+                        <Select {...field} onValueChange={field.onChange}>
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="enable">
+                              {t("setting.enable")}
+                            </SelectItem>
+                            <SelectItem value="disable">
+                              {t("setting.disable")}
                             </SelectItem>
                           </SelectContent>
                         </Select>

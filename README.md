@@ -191,7 +191,7 @@ Please refer to the file `env.tpl` for all available environment variables.
 
 ## 🙋 FAQs
 
-- Why does my Ollama or SearXNG not work properly and displays the error `TypeError: Failed to fetch`?
+**Why does my Ollama or SearXNG not work properly and displays the error `TypeError: Failed to fetch`?**
 
 If your request generates `CORS` due to browser security restrictions, you need to configure parameters for Ollama or SearXNG to allow cross-domain requests. You can also consider using the server proxy mode, which is a backend server that makes requests, which can effectively avoid cross-domain issues.
 
@@ -203,7 +203,7 @@ Deep Research is designed with your privacy in mind. **All research data and gen
 
 - [Next.js](https://nextjs.org/) - The React framework for building performant web applications.
 - [Shadcn UI](https://ui.shadcn.com/) - Beautifully designed components that helped streamline the UI development.
-- [Google Gemini](https://ai.google.dev/gemini-api) - Powering the intelligent research capabilities of Deep Research.
+- [AI SDKs](https://sdk.vercel.ai) - Powering the intelligent research capabilities of Deep Research.
 - [Deep Research](https://github.com/dzhng/deep-research) - Thanks to the project `dzhng/deep-research` for inspiration.
 
 ## 🤝 Contributing

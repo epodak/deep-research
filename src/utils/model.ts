@@ -78,7 +78,11 @@ export function filterOpenAIModelList(modelList: string[]) {
   const networkingModelList: string[] = [];
   const nonNetworkingModelList: string[] = [];
   modelList.filter((model) => {
-    if (model.startsWith("gpt-4o")) {
+    if (
+      model.startsWith("gpt-4o") ||
+      model.startsWith("gpt-4.1") ||
+      !model.includes("nano")
+    ) {
       networkingModelList.push(model);
     } else {
       nonNetworkingModelList.push(model);

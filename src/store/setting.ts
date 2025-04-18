@@ -54,6 +54,7 @@ export interface SettingStore {
   searchMaxResult: number;
   language: string;
   theme: string;
+  debug: string;
 }
 
 interface SettingFunction {
@@ -114,6 +115,7 @@ export const defaultValues: SettingStore = {
   searchMaxResult: 5,
   language: "",
   theme: "system",
+  debug: "disable",
 };
 
 export const useSettingStore = create(
