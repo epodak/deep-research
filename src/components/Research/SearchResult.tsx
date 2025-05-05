@@ -1,19 +1,20 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import {
   LoaderCircle,
   CircleCheck,
   TextSearch,
   Download,
   Trash,
+  RotateCcw,
+  NotebookText,
 } from "lucide-react";
-import { Crepe } from "@milkdown/crepe";
-import { replaceAll, getHTML } from "@milkdown/kit/utils";
 import { Button } from "@/components/Internal/Button";
 import {
   Form,
@@ -32,10 +33,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import useAccurateTimer from "@/hooks/useAccurateTimer";
 import useDeepResearch from "@/hooks/useDeepResearch";
+import useKnowledge from "@/hooks/useKnowledge";
 import { useTaskStore } from "@/store/task";
+import { useKnowledgeStore } from "@/store/knowledge";
 import { downloadFile } from "@/utils/file";
 
-const MilkdownEditor = dynamic(() => import("@/components/MilkdownEditor"));
+const MagicDown = dynamic(() => import("@/components/MagicDown"));
+const MagicDownView = dynamic(() => import("@/components/MagicDown/View"));
 
 const formSchema = z.object({
   suggestion: z.string().optional(),
@@ -51,44 +55,16 @@ function TaskState({ state }: { state: SearchTask["state"] }) {
   }
 }
 
-function ResearchGoal({
-  milkdownEditor,
-  goal,
-}: {
-  milkdownEditor?: Crepe;
-  goal: string;
-}) {
-  const [html, setHtml] = useState<string>("");
-
-  useEffect(() => {
-    if (milkdownEditor && goal) {
-      replaceAll(goal)(milkdownEditor.editor.ctx);
-      const html = getHTML()(milkdownEditor.editor.ctx);
-      setHtml(html);
-    }
-  }, [milkdownEditor, goal]);
-
-  return html !== "" ? (
-    <blockquote className="hidden-empty-p">
-      <div
-        dangerouslySetInnerHTML={{
-          __html: html,
-        }}
-      ></div>
-    </blockquote>
-  ) : null;
-}
-
 function SearchResult() {
   const { t } = useTranslation();
   const taskStore = useTaskStore();
   const { status, runSearchTask, reviewSearchResult } = useDeepResearch();
+  const { generateId } = useKnowledge();
   const {
     formattedTime,
     start: accurateTimerStart,
     stop: accurateTimerStop,
   } = useAccurateTimer();
-  const [milkdownEditor, setMilkdownEditor] = useState<Crepe>();
   const [isThinking, setIsThinking] = useState<boolean>(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -98,17 +74,18 @@ function SearchResult() {
     },
   });
 
-  useEffect(() => {
-    form.setValue("suggestion", taskStore.suggestion);
-  }, [taskStore.suggestion, form]);
-
   function getSearchResultContent(item: SearchTask) {
     return [
-      `> ${item.researchGoal}\n---`,
+      `## ${item.query}`,
+      `> ${item.researchGoal}`,
+      "---",
       item.learning,
       item.sources?.length > 0
         ? `#### ${t("research.common.sources")}\n\n${item.sources
-            .map((source) => `- [${source.title || source.url}](${source.url})`)
+            .map(
+              (source, idx) =>
+                `${idx + 1}. [${source.title || source.url}][${idx + 1}]`
+            )
             .join("\n")}`
         : "",
     ].join("\n\n");
@@ -134,34 +111,41 @@ function SearchResult() {
     }
   }
 
+  function addToKnowledgeBase(item: SearchTask) {
+    const { save } = useKnowledgeStore.getState();
+    const currentTime = Date.now();
+    save({
+      id: generateId("knowledge"),
+      title: item.query,
+      content: getSearchResultContent(item),
+      type: "knowledge",
+      createdAt: currentTime,
+      updatedAt: currentTime,
+    });
+    toast.message(t("research.common.addToKnowledgeBaseTip"));
+  }
+
+  async function handleRetry(query: string, researchGoal: string) {
+    const { updateTask } = useTaskStore.getState();
+    const newTask: SearchTask = {
+      query,
+      researchGoal,
+      learning: "",
+      sources: [],
+      state: "unprocessed",
+    };
+    updateTask(query, newTask);
+    await runSearchTask([newTask]);
+  }
+
   function handleRemove(query: string) {
     const { removeTask } = useTaskStore.getState();
     removeTask(query);
   }
 
-  useLayoutEffect(() => {
-    const crepe = new Crepe({
-      defaultValue: "",
-      root: document.createDocumentFragment(),
-      features: {
-        [Crepe.Feature.ImageBlock]: false,
-        [Crepe.Feature.BlockEdit]: false,
-        [Crepe.Feature.Toolbar]: false,
-        [Crepe.Feature.LinkTooltip]: false,
-      },
-    });
-
-    crepe
-      .setReadonly(true)
-      .create()
-      .then(() => {
-        setMilkdownEditor(crepe);
-      });
-
-    return () => {
-      crepe.destroy();
-    };
-  }, []);
+  useEffect(() => {
+    form.setValue("suggestion", taskStore.suggestion);
+  }, [taskStore.suggestion, form]);
 
   return (
     <section className="p-4 border rounded-md mt-4 print:hidden">
@@ -183,17 +167,32 @@ function SearchResult() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="prose prose-slate dark:prose-invert max-w-full min-h-20">
-                    <ResearchGoal
-                      milkdownEditor={milkdownEditor}
-                      goal={item.researchGoal}
-                    />
-                    <MilkdownEditor
+                    <MagicDownView>{`> ${item.researchGoal}`}</MagicDownView>
+                    <Separator className="mb-4" />
+                    <MagicDown
                       value={item.learning}
                       onChange={(value) =>
                         taskStore.updateTask(item.query, { learning: value })
                       }
                       tools={
                         <>
+                          <div className="px-1">
+                            <Separator className="dark:bg-slate-700" />
+                          </div>
+                          <Button
+                            className="float-menu-button"
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            title={t("research.common.restudy")}
+                            side="left"
+                            sideoffset={8}
+                            onClick={() =>
+                              handleRetry(item.query, item.researchGoal)
+                            }
+                          >
+                            <RotateCcw />
+                          </Button>
                           <Button
                             className="float-menu-button"
                             type="button"
@@ -214,7 +213,19 @@ function SearchResult() {
                             type="button"
                             size="icon"
                             variant="ghost"
-                            title={t("editor.export")}
+                            title={t("research.common.addToKnowledgeBase")}
+                            side="left"
+                            sideoffset={8}
+                            onClick={() => addToKnowledgeBase(item)}
+                          >
+                            <NotebookText />
+                          </Button>
+                          <Button
+                            className="float-menu-button"
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            title={t("research.common.export")}
                             side="left"
                             sideoffset={8}
                             onClick={() =>
@@ -229,7 +240,7 @@ function SearchResult() {
                           </Button>
                         </>
                       }
-                    ></MilkdownEditor>
+                    ></MagicDown>
                     {item.sources?.length > 0 ? (
                       <>
                         <hr className="my-6" />
