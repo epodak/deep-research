@@ -26,6 +26,7 @@ Deep Research uses a variety of powerful AI models to generate in-depth research
 - **Support for Multi-LLM:** Supports a variety of mainstream large language models, including Gemini, OpenAI, Anthropic, Deepseek, Grok, OpenAI Compatible, OpenRouter, Ollama, etc.
 - **Support Web Search:** Supports search engines such as Searxng, Tavily, Firecrawl, Exa, Bocha, etc., allowing LLMs that do not support search to use the web search function more conveniently.
 - **Thinking & Task Models:** Employs sophisticated "Thinking" and "Task" models to balance depth and speed, ensuring high-quality results quickly. Support switching research models.
+- **Support Further Research:** You can refine or adjust the research content at any stage of the project and support re-research from that stage.
 - **Local Knowledge Base:** Supports uploading and processing text, Office, PDF and other resource files to generate local knowledge base.
 - **Artifact** Supports editing of research content, with two editing modes: WYSIWYM and Markdown. It is possible to adjust the reading level, article length and full text translation.
 - **Research History:** Support preservation of research history, you can review previous research results at any time and conduct in-depth research again.
@@ -190,6 +191,137 @@ Please refer to the file `env.tpl` for all available environment variables.
 - **Security Setting:** By setting `ACCESS_PASSWORD`, you can better protect the security of the server API.
 
 - **Make variables effective:** After adding or modifying this environment variable, please redeploy the project for the changes to take effect.
+
+## 🪄 How it works
+
+1. **Research topic**
+
+   - Input research topic
+   - Use local research resources (optional)
+   - Start thinking (or rethinking)
+
+2. **Propose your ideas**
+
+   - The system asks questions based on the user's research topic to confirm the research direction
+   - Answer system questions (optional)
+   - Write a research plan (or rewrite the research plan)
+   - The system outputs the research plan
+   - Start in-depth research (or re-research)
+   - The system generates SERP queries
+
+3. **Information collection**
+
+   - Initial research
+     - Start the first round of data collection
+     - Retrieve local research resources based on SERP queries
+     - Extract learning points related to SERP queries from local research resources
+     - Collect information from the Internet based on SERP queries
+     - Extract learning points related to SERP queries from materials collected on the Internet
+     - Complete the first round of information collection
+   - In-depth research (this process can be repeated)
+     - Propose research suggestions (optional)
+     - Start a new round of information collection (the process is the same as the initial research)
+
+4. **Generate Final Report**
+
+   - Make a writing request (optional)
+   - Summarize all research materials into a comprehensive Markdown report
+   - Include all sources and references
+   - Organize information in a clear and easy to read format
+   - Regenerate research report (optional)
+
+```mermaid
+flowchart TD
+
+    subgraph Phase 1: Research Topic
+        A[Input Research Topic]
+        Think[Start Thinking / Rethinking]
+        OptLocal{Use Local Resources?}
+        UseLocal[Use Local Research Resources]
+    end
+
+    subgraph Phase 2: Propose Idea
+        SysQuest[System asks Questions]
+        OptAnswer{Answer Questions?}
+        AnswerQuest[Answer System Questions]
+        WritePlan[Write / Rewrite Research Plan]
+        PlanOutput[System Outputs Research Plan]
+        StartDeep[Start Deep Research / Re-Research]
+        GenSERP[System Generates SERP Queries]
+    end
+
+    subgraph Phase 3: Information Gathering Cycle
+        GatherData[Gather Data based on SERP Queries Local & Web]
+        Extract[Extract Learnings]
+        LearningsAccumulated((Learnings))
+        DecideMore{More Research Needed?}
+        OptSuggest{Propose Suggestions?}
+        Suggest[Propose Research Suggestions]
+    end
+
+    subgraph Phase 4: Generate Final Report
+        OptWriteReq{Provide Writing Requirements?}
+        WriteReq[Provide Writing Requirements]
+        Compile[Compile All Research into Report]
+        ReportOut["Markdown Report<br/>(incl. sources & references)"]
+        OptRegen{Regenerate Report?}
+        Regen[Regenerate Research Report]
+        End((End))
+    end
+
+    %% Phase 1 Flow
+    A --> Think;
+    Think --> OptLocal;
+    OptLocal -- Yes --> UseLocal;
+    OptLocal -- No --> SysQuest;
+    UseLocal --> SysQuest;
+
+    %% Phase 2 Flow
+    SysQuest --> OptAnswer;
+    OptAnswer -- Yes --> AnswerQuest;
+    OptAnswer -- No --> WritePlan;
+    AnswerQuest --> WritePlan;
+    WritePlan --> PlanOutput;
+    PlanOutput --> StartDeep;
+    StartDeep --> GenSERP;
+
+    %% Phase 3 Flow (Internal Loop)
+    GenSERP --> GatherData;
+    GatherData --> Extract;
+    Extract --> LearningsAccumulated;
+    LearningsAccumulated --> DecideMore;
+    DecideMore -- Yes (Continue Gathering) --> OptSuggest;
+    OptSuggest -- Yes --> Suggest;
+    Suggest --> GatherData;
+    OptSuggest -- No --> GatherData;
+
+    %% Exit Phase 3 to Phase 4
+    DecideMore -- No (Proceed to Report) --> OptWriteReq;
+
+    %% Loops for "Re-" Actions
+    StartDeep -- Rethink Topic --> Think;
+    StartDeep -- Rewrite Plan --> WritePlan;
+    DecideMore -- Start New Deep Research Cycle --> StartDeep;
+
+    %% Phase 4 Flow (Internal Loop)
+    OptWriteReq -- Yes --> WriteReq;
+    OptWriteReq -- No --> Compile;
+    WriteReq --> Compile;
+    Compile --> ReportOut;
+    ReportOut --> OptRegen;
+    OptRegen -- Yes --> Regen;
+    Regen --> Compile;
+    OptRegen -- No --> End;
+
+    %% Styling (similar categories to example)
+    classDef input fill:#7bed9f,stroke:#2ed573,color:black;
+    classDef process fill:#70a1ff,stroke:#1e90ff,color:black;
+    classDef decision fill:#ffa502,stroke:#ff7f50,color:black;
+    classDef optional fill:#dfe6e9,stroke:#b2bec3,color:black;
+    classDef io fill:#ff4757,stroke:#ff6b81,color:black;
+    classDef loop fill:#a8e6cf,stroke:#3b7a57,color:black;
+    classDef startEnd fill:#bcaaa4,stroke:#795548,color:black;
+```
 
 ## 🙋 FAQs
 
