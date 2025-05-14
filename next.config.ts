@@ -16,6 +16,9 @@ const ANTHROPIC_API_BASE_URL =
 const DEEPSEEK_API_BASE_URL =
   process.env.DEEPSEEK_API_BASE_URL || "https://api.deepseek.com";
 const XAI_API_BASE_URL = process.env.XAI_API_BASE_URL || "https://api.x.ai";
+const MISTRAL_API_BASE_URL =
+  process.env.MISTRAL_API_BASE_URL || "https://api.mistral.ai";
+const AZURE_RESOURCE_NAME = process.env.AZURE_RESOURCE_NAME || "";
 const OPENAI_COMPATIBLE_API_BASE_URL =
   process.env.OPENAI_COMPATIBLE_API_BASE_URL || "";
 const POLLINATIONS_API_BASE_URL =
@@ -91,6 +94,14 @@ if (BUILD_MODE === "export") {
       {
         source: "/api/ai/xai/:path*",
         destination: `${XAI_API_BASE_URL}/:path*`,
+      },
+      {
+        source: "/api/ai/mistral/:path*",
+        destination: `${MISTRAL_API_BASE_URL}/:path*`,
+      },
+      {
+        source: "/api/ai/azure/:path*",
+        destination: `https://${AZURE_RESOURCE_NAME}.openai.azure.com/openai/deployments/:path*`,
       },
       {
         source: "/api/ai/openaicompatible/:path*",

@@ -58,6 +58,7 @@ import {
   ANTHROPIC_BASE_URL,
   DEEPSEEK_BASE_URL,
   XAI_BASE_URL,
+  MISTRAL_BASE_URL,
   POLLINATIONS_BASE_URL,
   OLLAMA_BASE_URL,
   TAVILY_BASE_URL,
@@ -72,6 +73,7 @@ import {
   filterOpenRouterModelList,
   filterDeepSeekModelList,
   filterOpenAIModelList,
+  filterMistralModelList,
   filterPollinationsModelList,
   getCustomModelList,
 } from "@/utils/model";
@@ -118,6 +120,15 @@ const formSchema = z.object({
   xAIApiProxy: z.string().optional(),
   xAIThinkingModel: z.string().optional(),
   xAINetworkingModel: z.string().optional(),
+  mistralApiKey: z.string().optional(),
+  mistralApiProxy: z.string().optional(),
+  mistralThinkingModel: z.string().optional(),
+  mistralNetworkingModel: z.string().optional(),
+  azureApiKey: z.string().optional(),
+  azureResourceName: z.string().optional(),
+  azureApiVersion: z.string().optional(),
+  azureThinkingModel: z.string().optional(),
+  azureNetworkingModel: z.string().optional(),
   openAICompatibleApiKey: z.string().optional(),
   openAICompatibleApiProxy: z.string().optional(),
   openAICompatibleThinkingModel: z.string().optional(),
@@ -206,6 +217,8 @@ function Setting({ open, onClose }: SettingProps) {
       return filterOpenRouterModelList(modelList);
     } else if (provider === "deepseek") {
       return filterDeepSeekModelList(modelList);
+    } else if (provider === "mistral") {
+      return filterMistralModelList(modelList);
     } else if (provider === "pollinations") {
       return filterPollinationsModelList(modelList);
     }
@@ -219,6 +232,8 @@ function Setting({ open, onClose }: SettingProps) {
       return filterOpenRouterModelList(modelList);
     } else if (provider === "openai") {
       return filterOpenAIModelList(modelList);
+    } else if (provider === "mistral") {
+      return filterMistralModelList(modelList);
     } else if (provider === "pollinations") {
       return filterPollinationsModelList(modelList);
     }
@@ -446,6 +461,14 @@ function Setting({ open, onClose }: SettingProps) {
                             ) : null}
                             {!isDisabledAIProvider("xai") ? (
                               <SelectItem value="xai">xAI Grok</SelectItem>
+                            ) : null}
+                            {!isDisabledAIProvider("mistral") ? (
+                              <SelectItem value="mistral">Mistral</SelectItem>
+                            ) : null}
+                            {!isDisabledAIProvider("azure") ? (
+                              <SelectItem value="azure">
+                                Azure OpenAI
+                              </SelectItem>
                             ) : null}
                             {!isDisabledAIProvider("openrouter") ? (
                               <SelectItem value="openrouter">
@@ -800,6 +823,144 @@ function Setting({ open, onClose }: SettingProps) {
                                 updateSetting(
                                   "xAIApiProxy",
                                   form.getValues("xAIApiProxy")
+                                )
+                              }
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div
+                    className={cn("space-y-4", {
+                      hidden: provider !== "mistral",
+                    })}
+                  >
+                    <FormField
+                      control={form.control}
+                      name="mistralApiKey"
+                      render={({ field }) => (
+                        <FormItem className="from-item">
+                          <FormLabel className="col-span-1">
+                            {t("setting.apiKeyLabel")}
+                            <span className="ml-1 text-red-500 max-sm:hidden">
+                              *
+                            </span>
+                          </FormLabel>
+                          <FormControl className="col-span-3">
+                            <Password
+                              type="text"
+                              placeholder={t("setting.apiKeyPlaceholder")}
+                              {...field}
+                              onBlur={() =>
+                                updateSetting(
+                                  "mistralApiKey",
+                                  form.getValues("mistralApiKey")
+                                )
+                              }
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="mistralApiProxy"
+                      render={({ field }) => (
+                        <FormItem className="from-item">
+                          <FormLabel className="col-span-1">
+                            {t("setting.apiUrlLabel")}
+                          </FormLabel>
+                          <FormControl className="col-span-3">
+                            <Input
+                              placeholder={MISTRAL_BASE_URL}
+                              {...field}
+                              onBlur={() =>
+                                updateSetting(
+                                  "mistralApiProxy",
+                                  form.getValues("mistralApiProxy")
+                                )
+                              }
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div
+                    className={cn("space-y-4", {
+                      hidden: provider !== "azure",
+                    })}
+                  >
+                    <FormField
+                      control={form.control}
+                      name="azureApiKey"
+                      render={({ field }) => (
+                        <FormItem className="from-item">
+                          <FormLabel className="col-span-1">
+                            {t("setting.apiKeyLabel")}
+                            <span className="ml-1 text-red-500 max-sm:hidden">
+                              *
+                            </span>
+                          </FormLabel>
+                          <FormControl className="col-span-3">
+                            <Password
+                              type="text"
+                              placeholder={t("setting.apiKeyPlaceholder")}
+                              {...field}
+                              onBlur={() =>
+                                updateSetting(
+                                  "azureApiKey",
+                                  form.getValues("azureApiKey")
+                                )
+                              }
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="azureResourceName"
+                      render={({ field }) => (
+                        <FormItem className="from-item">
+                          <FormLabel className="col-span-1">
+                            {t("setting.resourceNameLabel")}
+                            <span className="ml-1 text-red-500 max-sm:hidden">
+                              *
+                            </span>
+                          </FormLabel>
+                          <FormControl className="col-span-3">
+                            <Input
+                              placeholder={t("setting.resourceNamePlaceholder")}
+                              {...field}
+                              onBlur={() =>
+                                updateSetting(
+                                  "azureResourceName",
+                                  form.getValues("azureResourceName")
+                                )
+                              }
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="azureApiVersion"
+                      render={({ field }) => (
+                        <FormItem className="from-item">
+                          <FormLabel className="col-span-1">
+                            {t("setting.apiVersionLabel")}
+                          </FormLabel>
+                          <FormControl className="col-span-3">
+                            <Input
+                              placeholder={t("setting.apiVersionPlaceholder")}
+                              {...field}
+                              onBlur={() =>
+                                updateSetting(
+                                  "azureApiVersion",
+                                  form.getValues("azureApiVersion")
                                 )
                               }
                             />
@@ -1923,6 +2084,234 @@ function Setting({ open, onClose }: SettingProps) {
                                 </>
                               )}
                             </Button>
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div
+                  className={cn("space-y-4", {
+                    hidden: provider !== "mistral",
+                  })}
+                >
+                  <FormField
+                    control={form.control}
+                    name="mistralThinkingModel"
+                    render={({ field }) => (
+                      <FormItem className="from-item">
+                        <FormLabel className="col-span-1">
+                          <HelpTip tip={t("setting.thinkingModelTip")}>
+                            {t("setting.thinkingModel")}
+                            <span className="ml-1 text-red-500 max-sm:hidden">
+                              *
+                            </span>
+                          </HelpTip>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="col-span-3 w-full">
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger
+                                className={cn({
+                                  hidden: modelList.length === 0,
+                                })}
+                              >
+                                <SelectValue
+                                  placeholder={t(
+                                    "setting.modelListLoadingPlaceholder"
+                                  )}
+                                />
+                              </SelectTrigger>
+                              <SelectContent className="max-sm:max-h-72">
+                                {thinkingModelList[0].length > 0 ? (
+                                  <SelectGroup>
+                                    <SelectLabel>
+                                      {t("setting.recommendedModels")}
+                                    </SelectLabel>
+                                    {thinkingModelList[0].map((name) => {
+                                      return !isDisabledAIModel(name) ? (
+                                        <SelectItem key={name} value={name}>
+                                          {convertModelName(name)}
+                                        </SelectItem>
+                                      ) : null;
+                                    })}
+                                  </SelectGroup>
+                                ) : null}
+                                <SelectGroup>
+                                  <SelectLabel>
+                                    {t("setting.basicModels")}
+                                  </SelectLabel>
+                                  {thinkingModelList[1].map((name) => {
+                                    return !isDisabledAIModel(name) ? (
+                                      <SelectItem key={name} value={name}>
+                                        {convertModelName(name)}
+                                      </SelectItem>
+                                    ) : null;
+                                  })}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              className={cn("w-full", {
+                                hidden: modelList.length > 0,
+                              })}
+                              type="button"
+                              variant="outline"
+                              disabled={isRefreshing}
+                              onClick={() => fetchModelList()}
+                            >
+                              {isRefreshing ? (
+                                <>
+                                  <RefreshCw className="animate-spin" />{" "}
+                                  {t("setting.modelListLoading")}
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw /> {t("setting.refresh")}
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="mistralNetworkingModel"
+                    render={({ field }) => (
+                      <FormItem className="from-item">
+                        <FormLabel className="col-span-1">
+                          <HelpTip tip={t("setting.networkingModelTip")}>
+                            {t("setting.networkingModel")}
+                            <span className="ml-1 text-red-500 max-sm:hidden">
+                              *
+                            </span>
+                          </HelpTip>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="col-span-3 w-full">
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger
+                                className={cn({
+                                  hidden: modelList.length === 0,
+                                })}
+                              >
+                                <SelectValue
+                                  placeholder={t(
+                                    "setting.modelListLoadingPlaceholder"
+                                  )}
+                                />
+                              </SelectTrigger>
+                              <SelectContent className="max-sm:max-h-72">
+                                {networkingModelList[0].length > 0 ? (
+                                  <SelectGroup>
+                                    <SelectLabel>
+                                      {t("setting.recommendedModels")}
+                                    </SelectLabel>
+                                    {networkingModelList[0].map((name) => {
+                                      return !isDisabledAIModel(name) ? (
+                                        <SelectItem key={name} value={name}>
+                                          {convertModelName(name)}
+                                        </SelectItem>
+                                      ) : null;
+                                    })}
+                                  </SelectGroup>
+                                ) : null}
+                                <SelectGroup>
+                                  <SelectLabel>
+                                    {t("setting.basicModels")}
+                                  </SelectLabel>
+                                  {networkingModelList[1].map((name) => {
+                                    return !isDisabledAIModel(name) ? (
+                                      <SelectItem key={name} value={name}>
+                                        {convertModelName(name)}
+                                      </SelectItem>
+                                    ) : null;
+                                  })}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              className={cn("w-full", {
+                                hidden: modelList.length > 0,
+                              })}
+                              type="button"
+                              variant="outline"
+                              disabled={isRefreshing}
+                              onClick={() => fetchModelList()}
+                            >
+                              {isRefreshing ? (
+                                <>
+                                  <RefreshCw className="animate-spin" />{" "}
+                                  {t("setting.modelListLoading")}
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw /> {t("setting.refresh")}
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div
+                  className={cn("space-y-4", {
+                    hidden: provider !== "azure",
+                  })}
+                >
+                  <FormField
+                    control={form.control}
+                    name="azureThinkingModel"
+                    render={({ field }) => (
+                      <FormItem className="from-item">
+                        <FormLabel className="col-span-1">
+                          <HelpTip tip={t("setting.thinkingModelTip")}>
+                            {t("setting.thinkingModel")}
+                            <span className="ml-1 text-red-500 max-sm:hidden">
+                              *
+                            </span>
+                          </HelpTip>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="col-span-3 w-full">
+                            <Input
+                              placeholder={t("setting.modelListPlaceholder")}
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="azureNetworkingModel"
+                    render={({ field }) => (
+                      <FormItem className="from-item">
+                        <FormLabel className="col-span-1">
+                          <HelpTip tip={t("setting.networkingModelTip")}>
+                            {t("setting.networkingModel")}
+                            <span className="ml-1 text-red-500 max-sm:hidden">
+                              *
+                            </span>
+                          </HelpTip>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="col-span-3 w-full">
+                            <Input
+                              placeholder={t("setting.modelListPlaceholder")}
+                              {...field}
+                            />
                           </div>
                         </FormControl>
                       </FormItem>

@@ -245,7 +245,7 @@ function useWebSearch() {
         }),
       }
     );
-    const { results } = await response.json();
+    const { results = [] } = await response.json();
     return (results as TavilySearchResult[])
       .filter((item) => item.content && item.url)
       .map((result) => pick(result, ["title", "content", "url"])) as Source[];
@@ -297,7 +297,7 @@ function useWebSearch() {
         }),
       }
     );
-    const { data } = await response.json();
+    const { data = [] } = await response.json();
     return (data as FirecrawlDocument[])
       .filter((item) => item.description && item.url)
       .map((result) => ({
@@ -339,7 +339,7 @@ function useWebSearch() {
         }),
       }
     );
-    const { results } = await response.json();
+    const { results = [] } = await response.json();
     return (results as ExaSearchResult[])
       .filter((item) => (item.summary || item.text) && item.url)
       .map((result) => ({
@@ -380,7 +380,7 @@ function useWebSearch() {
         }),
       }
     );
-    const { data } = await response.json();
+    const { data = {} } = await response.json();
     const results = data.webPages?.value || [];
     return (results as BochaSearchResult[])
       .filter((item) => item.snippet && item.url)

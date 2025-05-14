@@ -5,7 +5,7 @@
 ![GitHub Release](https://img.shields.io/github/v/release/u14app/deep-research)
 ![Docker Image Size](https://img.shields.io/docker/image-size/xiangfa/deep-research/latest)
 ![Docker Pulls](https://img.shields.io/docker/pulls/xiangfa/deep-research)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-default.svg)](https://opensource.org/licenses/MIT)
 
 [![Gemini](https://img.shields.io/badge/Gemini-8E75B2?style=flat&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
 [![Next](https://img.shields.io/badge/Next.js-111111?style=flat&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
@@ -202,22 +202,18 @@ Please refer to the file `env.tpl` for all available environment variables.
 
 2. **Propose your ideas**
 
-   - The system asks questions based on the user's research topic to confirm the research direction
-   - Answer system questions (optional)
-   - Write a research plan (or rewrite the research plan)
+   - The system asks questions
+     - Answer system questions (optional)
+     - Write a research plan (or rewrite the research plan)
    - The system outputs the research plan
-   - Start in-depth research (or re-research)
-   - The system generates SERP queries
+     - Start in-depth research (or re-research)
+     - The system generates SERP queries
 
 3. **Information collection**
 
    - Initial research
-     - Start the first round of data collection
      - Retrieve local research resources based on SERP queries
-     - Extract learning points related to SERP queries from local research resources
      - Collect information from the Internet based on SERP queries
-     - Extract learning points related to SERP queries from materials collected on the Internet
-     - Complete the first round of information collection
    - In-depth research (this process can be repeated)
      - Propose research suggestions (optional)
      - Start a new round of information collection (the process is the same as the initial research)
@@ -226,101 +222,57 @@ Please refer to the file `env.tpl` for all available environment variables.
 
    - Make a writing request (optional)
    - Summarize all research materials into a comprehensive Markdown report
-   - Include all sources and references
-   - Organize information in a clear and easy to read format
    - Regenerate research report (optional)
 
 ```mermaid
-flowchart TD
+flowchart TB
+    A[Research Topic]:::start
 
-    subgraph Phase 1: Research Topic
-        A[Input Research Topic]
-        Think[Start Thinking / Rethinking]
-        OptLocal{Use Local Resources?}
-        UseLocal[Use Local Research Resources]
+    subgraph Propose[Propose your ideas]
+        B1[System asks questions]:::process
+        B2[System outputs the research plan]:::process
+        B3[System generates SERP queries]:::process
+        B1 --> B2
+        B2 --> B3
     end
 
-    subgraph Phase 2: Propose Idea
-        SysQuest[System asks Questions]
-        OptAnswer{Answer Questions?}
-        AnswerQuest[Answer System Questions]
-        WritePlan[Write / Rewrite Research Plan]
-        PlanOutput[System Outputs Research Plan]
-        StartDeep[Start Deep Research / Re-Research]
-        GenSERP[System Generates SERP Queries]
+    subgraph Collect[Information collection]
+        C1[Initial research]:::collection
+        C1a[Retrieve local research resources based on SERP queries]:::collection
+        C1b[Collect information from the Internet based on SERP queries]:::collection
+        C2[In-depth research]:::recursive
+        Refine{More in-depth research needed?}:::decision
+
+        C1 --> C1a
+        C1 --> C1b
+        C1a --> C2
+        C1b --> C2
+        C2 --> Refine
+        Refine -->|Yes| C2
     end
 
-    subgraph Phase 3: Information Gathering Cycle
-        GatherData[Gather Data based on SERP Queries Local & Web]
-        Extract[Extract Learnings]
-        LearningsAccumulated((Learnings))
-        DecideMore{More Research Needed?}
-        OptSuggest{Propose Suggestions?}
-        Suggest[Propose Research Suggestions]
-    end
+    Report[Generate Final Report]:::output
 
-    subgraph Phase 4: Generate Final Report
-        OptWriteReq{Provide Writing Requirements?}
-        WriteReq[Provide Writing Requirements]
-        Compile[Compile All Research into Report]
-        ReportOut["Markdown Report<br/>(incl. sources & references)"]
-        OptRegen{Regenerate Report?}
-        Regen[Regenerate Research Report]
-        End((End))
-    end
+    A --> Propose
+    B3 --> C1
 
-    %% Phase 1 Flow
-    A --> Think;
-    Think --> OptLocal;
-    OptLocal -- Yes --> UseLocal;
-    OptLocal -- No --> SysQuest;
-    UseLocal --> SysQuest;
+    %% Connect the exit from the loop/subgraph to the final report
+    Refine -->|No| Report
 
-    %% Phase 2 Flow
-    SysQuest --> OptAnswer;
-    OptAnswer -- Yes --> AnswerQuest;
-    OptAnswer -- No --> WritePlan;
-    AnswerQuest --> WritePlan;
-    WritePlan --> PlanOutput;
-    PlanOutput --> StartDeep;
-    StartDeep --> GenSERP;
+    %% Styling
+    classDef start fill:#7bed9f,stroke:#2ed573,color:black
+    classDef process fill:#70a1ff,stroke:#1e90ff,color:black
+    classDef recursive fill:#ffa502,stroke:#ff7f50,color:black
+    classDef output fill:#ff4757,stroke:#ff6b81,color:black
+    classDef collection fill:#a8e6cf,stroke:#3b7a57,color:black
+    classDef decision fill:#c8d6e5,stroke:#8395a7,color:black
 
-    %% Phase 3 Flow (Internal Loop)
-    GenSERP --> GatherData;
-    GatherData --> Extract;
-    Extract --> LearningsAccumulated;
-    LearningsAccumulated --> DecideMore;
-    DecideMore -- Yes (Continue Gathering) --> OptSuggest;
-    OptSuggest -- Yes --> Suggest;
-    Suggest --> GatherData;
-    OptSuggest -- No --> GatherData;
-
-    %% Exit Phase 3 to Phase 4
-    DecideMore -- No (Proceed to Report) --> OptWriteReq;
-
-    %% Loops for "Re-" Actions
-    StartDeep -- Rethink Topic --> Think;
-    StartDeep -- Rewrite Plan --> WritePlan;
-    DecideMore -- Start New Deep Research Cycle --> StartDeep;
-
-    %% Phase 4 Flow (Internal Loop)
-    OptWriteReq -- Yes --> WriteReq;
-    OptWriteReq -- No --> Compile;
-    WriteReq --> Compile;
-    Compile --> ReportOut;
-    ReportOut --> OptRegen;
-    OptRegen -- Yes --> Regen;
-    Regen --> Compile;
-    OptRegen -- No --> End;
-
-    %% Styling (similar categories to example)
-    classDef input fill:#7bed9f,stroke:#2ed573,color:black;
-    classDef process fill:#70a1ff,stroke:#1e90ff,color:black;
-    classDef decision fill:#ffa502,stroke:#ff7f50,color:black;
-    classDef optional fill:#dfe6e9,stroke:#b2bec3,color:black;
-    classDef io fill:#ff4757,stroke:#ff6b81,color:black;
-    classDef loop fill:#a8e6cf,stroke:#3b7a57,color:black;
-    classDef startEnd fill:#bcaaa4,stroke:#795548,color:black;
+    class A start
+    class B1,B2,B3 process
+    class C1,C1a,C1b collection
+    class C2 recursive
+    class Refine decision
+    class Report output
 ```
 
 ## 🙋 FAQs

@@ -4,6 +4,8 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createXai } from "@ai-sdk/xai";
+import { createMistral } from "@ai-sdk/mistral";
+import { createAzure } from "@ai-sdk/azure";
 import { createOllama } from "ollama-ai-provider";
 import { useSettingStore } from "@/store/setting";
 import {
@@ -13,6 +15,7 @@ import {
   ANTHROPIC_BASE_URL,
   DEEPSEEK_BASE_URL,
   XAI_BASE_URL,
+  MISTRAL_BASE_URL,
   OLLAMA_BASE_URL,
   POLLINATIONS_BASE_URL,
 } from "@/constants/urls";
@@ -116,6 +119,46 @@ function useModelProvider() {
               }
         );
         return xai(model, settings);
+      case "mistral":
+        const { mistralApiKey = "", mistralApiProxy } =
+          useSettingStore.getState();
+        const mistralKey = multiApiKeyPolling(mistralApiKey);
+        const mistral = createMistral(
+          mode === "local"
+            ? {
+                baseURL: completePath(
+                  mistralApiProxy || MISTRAL_BASE_URL,
+                  "/v1"
+                ),
+                apiKey: mistralKey,
+              }
+            : {
+                baseURL: "/api/ai/mistral/v1",
+                apiKey: accessKey,
+              }
+        );
+        return mistral(model, settings);
+      case "azure":
+        const {
+          azureApiKey = "",
+          azureResourceName,
+          azureApiVersion,
+        } = useSettingStore.getState();
+        const azureKey = multiApiKeyPolling(azureApiKey);
+        const azure = createAzure(
+          mode === "local"
+            ? {
+                baseURL: `https://${azureResourceName}.openai.azure.com/openai/deployments`,
+                apiKey: azureKey,
+                apiVersion: azureApiVersion,
+              }
+            : {
+                baseURL: "/api/ai/azure",
+                apiKey: accessKey,
+                apiVersion: azureApiVersion,
+              }
+        );
+        return azure(model, settings);
       case "openrouter":
         const { openRouterApiKey = "", openRouterApiProxy } =
           useSettingStore.getState();
@@ -246,6 +289,20 @@ function useModelProvider() {
           thinkingModel: xAIThinkingModel,
           networkingModel: xAINetworkingModel,
         };
+      case "mistral":
+        const { mistralThinkingModel, mistralNetworkingModel } =
+          useSettingStore.getState();
+        return {
+          thinkingModel: mistralThinkingModel,
+          networkingModel: mistralNetworkingModel,
+        };
+      case "azure":
+        const { azureThinkingModel, azureNetworkingModel } =
+          useSettingStore.getState();
+        return {
+          thinkingModel: azureThinkingModel,
+          networkingModel: azureNetworkingModel,
+        };
       case "openrouter":
         const { openRouterThinkingModel, openRouterNetworkingModel } =
           useSettingStore.getState();
@@ -300,6 +357,12 @@ function useModelProvider() {
       case "xai":
         const { xAIApiKey } = useSettingStore.getState();
         return xAIApiKey.length > 0;
+      case "mistral":
+        const { mistralApiKey } = useSettingStore.getState();
+        return mistralApiKey.length > 0;
+      case "azure":
+        const { azureApiKey } = useSettingStore.getState();
+        return azureApiKey.length > 0;
       case "openrouter":
         const { openRouterApiKey } = useSettingStore.getState();
         return openRouterApiKey.length > 0;

@@ -178,7 +178,7 @@ function useDeepResearch() {
       if (
         enableSearch &&
         searchProvider === "model" &&
-        provider === "openai" &&
+        ["openai", "azure"].includes(provider) &&
         model.startsWith("gpt-4o")
       ) {
         return {
@@ -246,9 +246,17 @@ function useDeepResearch() {
                 } else if (searchProvider === "searxng") {
                   sources = await searxng(item.query);
                 }
+
+                if (sources.length === 0) {
+                  throw new Error("Invalid Search Results");
+                }
               } catch (err) {
                 console.error(err);
-                handleError(`[${searchProvider}]: Search failed`);
+                handleError(
+                  `[${searchProvider}]: ${
+                    err instanceof Error ? err.message : "Search Failed"
+                  }`
+                );
                 return plimit.clearQueue();
               }
               searchResult = streamText({

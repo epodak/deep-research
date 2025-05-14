@@ -26,6 +26,15 @@ export interface SettingStore {
   xAIApiProxy: string;
   xAIThinkingModel: string;
   xAINetworkingModel: string;
+  mistralApiKey: string;
+  mistralApiProxy: string;
+  mistralThinkingModel: string;
+  mistralNetworkingModel: string;
+  azureApiKey: string;
+  azureResourceName: string;
+  azureApiVersion: string;
+  azureThinkingModel: string;
+  azureNetworkingModel: string;
   openAICompatibleApiKey: string;
   openAICompatibleApiProxy: string;
   openAICompatibleThinkingModel: string;
@@ -91,6 +100,15 @@ export const defaultValues: SettingStore = {
   xAIApiProxy: "",
   xAIThinkingModel: "",
   xAINetworkingModel: "",
+  mistralApiKey: "",
+  mistralApiProxy: "",
+  mistralThinkingModel: "mistral-large-latest",
+  mistralNetworkingModel: "mistral-medium-latest",
+  azureApiKey: "",
+  azureResourceName: "",
+  azureApiVersion: "",
+  azureThinkingModel: "",
+  azureNetworkingModel: "",
   openAICompatibleApiKey: "",
   openAICompatibleApiProxy: "",
   openAICompatibleThinkingModel: "",
