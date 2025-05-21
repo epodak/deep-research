@@ -66,6 +66,8 @@ export interface SettingStore {
   language: string;
   theme: string;
   debug: string;
+  references: string;
+  citationImage: string;
 }
 
 interface SettingFunction {
@@ -138,6 +140,8 @@ export const defaultValues: SettingStore = {
   language: "",
   theme: "system",
   debug: "disable",
+  references: "enable",
+  citationImage: "enable",
 };
 
 export const useSettingStore = create(

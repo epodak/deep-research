@@ -712,5 +712,58 @@ export async function middleware(request: NextRequest) {
       });
     }
   }
+  if (request.nextUrl.pathname.startsWith("/api/sse")) {
+    let authorization = request.headers.get("authorization") || "";
+    if (authorization !== "") {
+      authorization = authorization.substring(7);
+    } else if (request.method.toUpperCase() === "GET") {
+      authorization = request.nextUrl.searchParams.get("password") || "";
+    }
+    if (authorization !== accessPassword) {
+      return NextResponse.json(
+        { error: ERRORS.NO_PERMISSIONS },
+        { status: 403 }
+      );
+    } else {
+      const requestHeaders = new Headers();
+      requestHeaders.set(
+        "Content-Type",
+        request.headers.get("Content-Type") || "application/json"
+      );
+      requestHeaders.delete("Authorization");
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
+    }
+  }
+  if (request.nextUrl.pathname.startsWith("/api/mcp")) {
+    const authorization = request.headers.get("authorization") || "";
+    if (authorization.substring(7) !== accessPassword) {
+      const responseHeaders = new Headers();
+      responseHeaders.set("WWW-Authenticate", ERRORS.NO_PERMISSIONS.message);
+      return NextResponse.json(
+        {
+          error: 401,
+          error_description: ERRORS.NO_PERMISSIONS.message,
+          error_uri: request.nextUrl,
+        },
+        { headers: responseHeaders, status: 401 }
+      );
+    } else {
+      const requestHeaders = new Headers();
+      requestHeaders.set(
+        "Content-Type",
+        request.headers.get("Content-Type") || "application/json"
+      );
+      requestHeaders.delete("Authorization");
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
+    }
+  }
   return NextResponse.next();
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { streamText, smoothStream } from "ai";
+import { streamText } from "ai";
 import { parsePartialJson } from "@ai-sdk/ui-utils";
 import { openai } from "@ai-sdk/openai";
 import { type GoogleGenerativeAIProviderMetadata } from "@ai-sdk/google";
@@ -24,7 +24,7 @@ import {
   reviewSerpQueriesPrompt,
   writeFinalReportPrompt,
   getSERPQuerySchema,
-} from "@/utils/deep-research";
+} from "@/utils/deep-research/prompts";
 import { isNetworkingModel } from "@/utils/model";
 import { parseError } from "@/utils/error";
 import { pick, flat, unique } from "radash";
@@ -48,13 +48,6 @@ function removeJsonMarkdown(text: string) {
   return text.trim();
 }
 
-function smoothTextStream() {
-  return smoothStream({
-    chunking: "word",
-    delayInMs: 0,
-  });
-}
-
 function handleError(error: unknown) {
   const errorMessage = parseError(error);
   toast.error(errorMessage);
@@ -63,8 +56,8 @@ function handleError(error: unknown) {
 function useDeepResearch() {
   const { t } = useTranslation();
   const taskStore = useTaskStore();
-  const { createProvider, getModel } = useModelProvider();
-  const { tavily, firecrawl, exa, bocha, searxng } = useWebSearch();
+  const { createModelProvider, getModel } = useModelProvider();
+  const { search } = useWebSearch();
   const [status, setStatus] = useState<string>("");
 
   async function askQuestions() {
@@ -73,13 +66,12 @@ function useDeepResearch() {
     const { thinkingModel } = getModel();
     setStatus(t("research.common.thinking"));
     const result = streamText({
-      model: createProvider(thinkingModel),
+      model: await createModelProvider(thinkingModel),
       system: getSystemPrompt(),
       prompt: [
         generateQuestionsPrompt(question),
         getResponseLanguagePrompt(language),
       ].join("\n\n"),
-      experimental_transform: smoothTextStream(),
       onError: handleError,
     });
     let content = "";
@@ -96,13 +88,12 @@ function useDeepResearch() {
     const { thinkingModel } = getModel();
     setStatus(t("research.common.thinking"));
     const result = streamText({
-      model: createProvider(thinkingModel),
+      model: await createModelProvider(thinkingModel),
       system: getSystemPrompt(),
       prompt: [
         writeReportPlanPrompt(query),
         getResponseLanguagePrompt(language),
       ].join("\n\n"),
-      experimental_transform: smoothTextStream(),
       onError: handleError,
     });
     let content = "";
@@ -130,13 +121,12 @@ function useDeepResearch() {
 
     const { networkingModel } = getModel();
     const searchResult = streamText({
-      model: createProvider(networkingModel),
+      model: await createModelProvider(networkingModel),
       system: getSystemPrompt(),
       prompt: [
         processSearchKnowledgeResultPrompt(query, researchGoal, knowledges),
         getResponseLanguagePrompt(language),
       ].join("\n\n"),
-      experimental_transform: smoothTextStream(),
       onError: handleError,
     });
     let content = "";
@@ -154,6 +144,7 @@ function useDeepResearch() {
       searchProvider,
       parallelSearch,
       searchMaxResult,
+      references,
       language,
     } = useSettingStore.getState();
     const { resources } = useTaskStore.getState();
@@ -168,9 +159,9 @@ function useDeepResearch() {
         provider === "google" &&
         isNetworkingModel(model)
       ) {
-        return createProvider(model, { useSearchGrounding: true });
+        return createModelProvider(model, { useSearchGrounding: true });
       } else {
-        return createProvider(model);
+        return createModelProvider(model);
       }
     };
     const getTools = (model: string) => {
@@ -218,6 +209,7 @@ function useDeepResearch() {
           let content = "";
           let searchResult;
           let sources: Source[] = [];
+          let images: ImageSource[] = [];
           taskStore.updateTask(item.query, { state: "processing" });
           if (resources.length > 0) {
             const knowledges = await searchLocalKnowledges(
@@ -235,17 +227,9 @@ function useDeepResearch() {
           if (enableSearch) {
             if (searchProvider !== "model") {
               try {
-                if (searchProvider === "tavily") {
-                  sources = await tavily(item.query);
-                } else if (searchProvider === "firecrawl") {
-                  sources = await firecrawl(item.query);
-                } else if (searchProvider === "exa") {
-                  sources = await exa(item.query);
-                } else if (searchProvider === "bocha") {
-                  sources = await bocha(item.query);
-                } else if (searchProvider === "searxng") {
-                  sources = await searxng(item.query);
-                }
+                const results = await search(item.query);
+                sources = results.sources;
+                images = results.images;
 
                 if (sources.length === 0) {
                   throw new Error("Invalid Search Results");
@@ -259,23 +243,24 @@ function useDeepResearch() {
                 );
                 return plimit.clearQueue();
               }
+              const enableReferences = references === "enable";
               searchResult = streamText({
-                model: createModel(networkingModel),
+                model: await createModel(networkingModel),
                 system: getSystemPrompt(),
                 prompt: [
                   processSearchResultPrompt(
                     item.query,
                     item.researchGoal,
-                    sources
+                    sources,
+                    enableReferences
                   ),
                   getResponseLanguagePrompt(language),
                 ].join("\n\n"),
-                experimental_transform: smoothTextStream(),
                 onError: handleError,
               });
             } else {
               searchResult = streamText({
-                model: createModel(networkingModel),
+                model: await createModel(networkingModel),
                 system: getSystemPrompt(),
                 prompt: [
                   processResultPrompt(item.query, item.researchGoal),
@@ -283,19 +268,17 @@ function useDeepResearch() {
                 ].join("\n\n"),
                 tools: getTools(networkingModel),
                 providerOptions: getProviderOptions(),
-                experimental_transform: smoothStream(),
                 onError: handleError,
               });
             }
           } else {
             searchResult = streamText({
-              model: createProvider(networkingModel),
+              model: await createModelProvider(networkingModel),
               system: getSystemPrompt(),
               prompt: [
                 processResultPrompt(item.query, item.researchGoal),
                 getResponseLanguagePrompt(language),
               ].join("\n\n"),
-              experimental_transform: smoothTextStream(),
               onError: (err) => {
                 taskStore.updateTask(item.query, { state: "failed" });
                 handleError(err);
@@ -352,6 +335,7 @@ function useDeepResearch() {
             state: "completed",
             learning: content,
             sources,
+            images,
           });
           return content;
         });
@@ -366,13 +350,12 @@ function useDeepResearch() {
     setStatus(t("research.common.research"));
     const learnings = tasks.map((item) => item.learning);
     const result = streamText({
-      model: createProvider(thinkingModel),
+      model: await createModelProvider(thinkingModel),
       system: getSystemPrompt(),
       prompt: [
         reviewSerpQueriesPrompt(reportPlan, learnings, suggestion),
         getResponseLanguagePrompt(language),
       ].join("\n\n"),
-      experimental_transform: smoothTextStream(),
       onError: handleError,
     });
 
@@ -404,7 +387,7 @@ function useDeepResearch() {
   }
 
   async function writeFinalReport() {
-    const { language } = useSettingStore.getState();
+    const { citationImage, references, language } = useSettingStore.getState();
     const {
       reportPlan,
       tasks,
@@ -422,22 +405,30 @@ function useDeepResearch() {
     setSources([]);
     const learnings = tasks.map((item) => item.learning);
     const sources: Source[] = unique(
-      flat(tasks.map((item) => (item.sources ? item.sources : []))),
+      flat(tasks.map((item) => item.sources || [])),
       (item) => item.url
     );
+    const images: ImageSource[] = unique(
+      flat(tasks.map((item) => item.images || [])),
+      (item) => item.url
+    );
+    const enableCitationImage = citationImage === "enable";
+    const enableReferences = references === "enable";
     const result = streamText({
-      model: createProvider(thinkingModel),
+      model: await createModelProvider(thinkingModel),
       system: [getSystemPrompt(), outputGuidelinesPrompt].join("\n\n"),
       prompt: [
         writeFinalReportPrompt(
           reportPlan,
           learnings,
           sources.map((item) => pick(item, ["title", "url"])),
-          requirement
+          images,
+          requirement,
+          enableCitationImage,
+          enableReferences
         ),
         getResponseLanguagePrompt(language),
       ].join("\n\n"),
-      experimental_transform: smoothTextStream(),
       onError: handleError,
     });
     let content = "";
@@ -458,7 +449,7 @@ function useDeepResearch() {
           .join("\n");
       updateFinalReport(content);
     }
-    const title = content
+    const title = (content || "")
       .split("\n")[0]
       .replaceAll("#", "")
       .replaceAll("*", "")
@@ -478,13 +469,12 @@ function useDeepResearch() {
     try {
       let queries = [];
       const result = streamText({
-        model: createProvider(thinkingModel),
+        model: await createModelProvider(thinkingModel),
         system: getSystemPrompt(),
         prompt: [
           generateSerpQueriesPrompt(reportPlan),
           getResponseLanguagePrompt(language),
         ].join("\n\n"),
-        experimental_transform: smoothTextStream(),
         onError: handleError,
       });
 

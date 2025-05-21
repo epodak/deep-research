@@ -12,6 +12,10 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=flat&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![shadcn/ui](https://img.shields.io/badge/shadcn/ui-111111?style=flat&logo=shadcnui&logoColor=white)](https://ui.shadcn.com/)
 
+[![Vercel](https://img.shields.io/badge/Vercel-111111?style=flat&logo=vercel&logoColor=white)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fu14app%2Fdeep-research&project-name=deep-research&repository-name=deep-research)
+[![Cloudflare](https://img.shields.io/badge/Cloudflare-F69652?style=flat&logo=cloudflare&logoColor=white)](./docs/How-to-deploy-to-Cloudflare-Pages.md)
+[![PWA](https://img.shields.io/badge/PWA-blue?style=flat&logo=pwa&logoColor=white)](https://research.u14.app/)
+
 </div>
 
 **Lightning-Fast Deep Research Report**
@@ -23,17 +27,20 @@ Deep Research uses a variety of powerful AI models to generate in-depth research
 - **Rapid Deep Research:** Generates comprehensive research reports in about 2 minutes, significantly accelerating your research process.
 - **Multi-platform Support:** Supports rapid deployment to Vercel, Cloudflare and other platforms.
 - **Powered by AI:** Utilizes the advanced AI models for accurate and insightful analysis.
-- **Support for Multi-LLM:** Supports a variety of mainstream large language models, including Gemini, OpenAI, Anthropic, Deepseek, Grok, OpenAI Compatible, OpenRouter, Ollama, etc.
+- **Privacy-Focused:** Your data remains private and secure, as all data is stored locally on your browser.
+- **Support for Multi-LLM:** Supports a variety of mainstream large language models, including Gemini, OpenAI, Anthropic, Deepseek, Grok, Mistral, Azure OpenAI, any OpenAI Compatible LLMs, OpenRouter, Ollama, etc.
 - **Support Web Search:** Supports search engines such as Searxng, Tavily, Firecrawl, Exa, Bocha, etc., allowing LLMs that do not support search to use the web search function more conveniently.
 - **Thinking & Task Models:** Employs sophisticated "Thinking" and "Task" models to balance depth and speed, ensuring high-quality results quickly. Support switching research models.
 - **Support Further Research:** You can refine or adjust the research content at any stage of the project and support re-research from that stage.
 - **Local Knowledge Base:** Supports uploading and processing text, Office, PDF and other resource files to generate local knowledge base.
-- **Artifact** Supports editing of research content, with two editing modes: WYSIWYM and Markdown. It is possible to adjust the reading level, article length and full text translation.
+- **Artifact:** Supports editing of research content, with two editing modes: WYSIWYM and Markdown. It is possible to adjust the reading level, article length and full text translation.
+- **Knowledge Graph:** It supports one-click generation of knowledge graph, allowing you to have a systematic understanding of the report content.
 - **Research History:** Support preservation of research history, you can review previous research results at any time and conduct in-depth research again.
 - **Local & Server API Support:** Offers flexibility with both local and server-side API calling options to suit your needs.
-- **Privacy-Focused:** Your data remains private and secure, as all data is stored locally on your browser.
+- **Support for SaaS and MCP:** You can use this project as a deep research service (SaaS) through the SSE API, or use it in other AI services through MCP service.
+- **Support PWA:** With Progressive Web App (PWA) technology, you can use the project like a software.
 - **Support Multi-Key payload:** Support Multi-Key payload to improve API response efficiency.
-- **Multi-language Support**: English、简体中文.
+- **Multi-language Support**: English, 简体中文, Español.
 - **Built with Modern Technologies:** Developed using Next.js 15 and Shadcn UI, ensuring a modern, performant, and visually appealing user experience.
 - **MIT Licensed:** Open-source and freely available for personal and commercial use under the MIT License.
 
@@ -43,7 +50,7 @@ Deep Research uses a variety of powerful AI models to generate in-depth research
 - [x] Support editing final report and search results
 - [x] Support for other LLM models
 - [x] Support file upload and local knowledge base
-- [ ] Support MCP
+- [x] Support SSE API and MCP server
 
 ## 🚀 Getting Started
 
@@ -92,6 +99,13 @@ Follow these steps to get Deep Research up and running on your local browser.
 3. **Set up Environment Variables:**
 
    You need to modify the file `env.tpl` to `.env`, or create a `.env` file and write the variables to this file.
+
+   ```bash
+   # For Development
+   cp env.tpl .env.local
+   # For Production
+   cp env.tpl .env
+   ```
 
 4. **Run the development server:**
 
@@ -180,7 +194,7 @@ pnpm build:export
 
 As mentioned in the "Getting Started" section, Deep Research utilizes the following environment variables for server-side API configurations:
 
-Please refer to the file `env.tpl` for all available environment variables.
+Please refer to the file [env.tpl](./env.tpl) for all available environment variables.
 
 **Important Notes on Environment Variables:**
 
@@ -191,6 +205,135 @@ Please refer to the file `env.tpl` for all available environment variables.
 - **Security Setting:** By setting `ACCESS_PASSWORD`, you can better protect the security of the server API.
 
 - **Make variables effective:** After adding or modifying this environment variable, please redeploy the project for the changes to take effect.
+
+## 📄 API documentation
+
+Currently the project supports two forms of API: Server-Sent Events (SSE) and Model Context Protocol (MCP).
+
+### Server-Sent Events API
+
+The Deep Research API provides a real-time interface for initiating and monitoring complex research tasks.
+
+Recommended to use the API via `@microsoft/fetch-event-source`, to get the final report, you need to listen to the `message` event, the data will be returned in the form of a text stream.
+
+#### POST method
+
+Endpoint: `/api/sse`
+
+Method: `POST`
+
+Body:
+
+```typescript
+interface SSEConfig {
+  // Research topic
+  query: string;
+  // AI provider, Possible values ​​include: google, openai, anthropic, deepseek, xai, mistral, azure, openrouter, openaicompatible, pollinations, ollama
+  provider: string;
+  // Thinking model id
+  thinkingModel: string;
+  // Task model id
+  taskModel: string;
+  // Search provider, Possible values ​​include: model, tavily, firecrawl, exa, bocha, searxng
+  searchProvider: string;
+  // Response Language, also affects the search language. (optional)
+  language?: string;
+  // Maximum number of search results. Default, `5` (optional)
+  maxResult?: number;
+  // Whether to include content-related images in the final report. Default, `true`. (optional)
+  enableCitationImage?: boolean;
+  // Whether to include citation links in search results and final reports. Default, `true`. (optional)
+  enableReferences?: boolean;
+}
+```
+
+Headers:
+
+```typescript
+interface Headers {
+  "Content-Type": "application/json";
+  // If you set an access password
+  // Authorization: "Bearer YOUR_ACCESS_PASSWORD";
+}
+```
+
+See the detailed [API documentation](./docs/deep-research-api-doc.md).
+
+#### GET method
+
+This is an interesting implementation. You can watch the whole process of deep research directly through the URL just like watching a video.
+
+You can access the deep research report via the following link:
+
+```text
+http://localhost:3000/api/sse/live?query=AI+trends+for+this+year&provider=pollinations&thinkingModel=openai&taskModel=openai-fast&searchProvider=searxng
+```
+
+Query Params:
+
+```typescript
+// The parameters are the same as POST parameters
+interface QueryParams extends SSEConfig {
+  // If you set the `ACCESS_PASSWORD` environment variable, this parameter is required
+  password?: string;
+}
+```
+
+### Model Context Protocol (MCP) Server
+
+Currently supports `StreamableHTTP` and `SSE` Server Transport.
+
+StreamableHTTP server endpoint: `/api/mcp`, transport type: `streamable-http`
+
+SSE server endpoint: `/api/mcp/sse`, transport type: `sse`
+
+```json
+{
+  "mcpServers": {
+    "deep-research": {
+      "url": "http://127.0.0.1:3000/api/mcp",
+      "transportType": "streamable-http",
+      "timeout": 600
+    }
+  }
+}
+```
+
+**Note:** Since deep research take a long time to execute, you need to set a longer timeout to avoid interrupting the study.
+
+If your server sets `ACCESS_PASSWORD`, the MCP service will be protected and you need to add additional headers parameters:
+
+```json
+{
+  "mcpServers": {
+    "deep-research": {
+      "url": "http://127.0.0.1:3000/api/mcp",
+      "transportType": "streamable-http",
+      "timeout": 600,
+      "headers": {
+        "Authorization": "Bearer YOUR_ACCESS_PASSWORD"
+      }
+    }
+  }
+}
+```
+
+**Enabling MCP service requires setting global environment variables:**
+
+```bash
+# MCP Server AI provider
+# Possible values ​​include: google, openai, anthropic, deepseek, xai, mistral, azure, openrouter, openaicompatible, pollinations, ollama
+MCP_AI_PROVIDER=google
+# MCP Server search provider. Default, `model`
+# Possible values ​​include: model, tavily, firecrawl, exa, bocha, searxng
+MCP_SEARCH_PROVIDER=tavily
+# MCP Server thinking model id, the core model used in deep research.
+MCP_THINKING_MODEL=gemini-2.0-flash-thinking-exp
+# MCP Server task model id, used for secondary tasks, high output models are recommended.
+MCP_TASK_MODEL=gemini-2.0-flash-exp
+```
+
+**Note:** To ensure that the MCP service can be used normally, you need to set the environment variables of the corresponding model and search engine. For specific environment variable parameters, please refer to [env.tpl](./env.tpl).
 
 ## 🪄 How it works
 
