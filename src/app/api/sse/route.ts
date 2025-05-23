@@ -47,10 +47,6 @@ export async function POST(req: NextRequest) {
         )
       );
 
-      req.signal.addEventListener("abort", () => {
-        console.log("Client disconnected");
-      });
-
       const deepResearch = new DeepResearch({
         language,
         AIProvider: {

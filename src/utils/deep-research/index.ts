@@ -13,6 +13,7 @@ import {
 } from "./prompts";
 import { outputGuidelinesPrompt } from "@/constants/prompts";
 import { isNetworkingModel } from "@/utils/model";
+import { ThinkTagStreamProcessor, removeJsonMarkdown } from "@/utils/text";
 import { pick, unique, flat, isFunction } from "radash";
 
 export interface DeepResearchOptions {
@@ -58,21 +59,6 @@ export interface DeepResearchSearchResult {
     url: string;
     description?: string;
   }[];
-}
-
-export function removeJsonMarkdown(text: string) {
-  text = text.trim();
-  if (text.startsWith("```json")) {
-    text = text.slice(7);
-  } else if (text.startsWith("json")) {
-    text = text.slice(4);
-  } else if (text.startsWith("```")) {
-    text = text.slice(3);
-  }
-  if (text.endsWith("```")) {
-    text = text.slice(0, -3);
-  }
-  return text.trim();
 }
 
 function addQuoteBeforeAllLine(text: string = "") {
@@ -125,6 +111,7 @@ class DeepResearch {
 
   async writeReportPlan(query: string): Promise<string> {
     this.onMessage("progress", { step: "report-plan", status: "start" });
+    const thinkTagStreamProcessor = new ThinkTagStreamProcessor();
     const result = streamText({
       model: await this.getThinkingModel(),
       system: getSystemPrompt(),
@@ -135,9 +122,21 @@ class DeepResearch {
     });
     let content = "";
     this.onMessage("message", { type: "text", text: "<report-plan>\n" });
-    for await (const textPart of result.textStream) {
-      content += textPart;
-      this.onMessage("message", { type: "text", text: textPart });
+    for await (const part of result.fullStream) {
+      if (part.type === "text-delta") {
+        thinkTagStreamProcessor.processChunk(
+          part.textDelta,
+          (data) => {
+            content += data;
+            this.onMessage("message", { type: "text", text: data });
+          },
+          (data) => {
+            this.onMessage("reasoning", { type: "text", text: data });
+          }
+        );
+      } else if (part.type === "reasoning") {
+        this.onMessage("reasoning", { type: "text", text: part.textDelta });
+      }
     }
     this.onMessage("message", { type: "text", text: "\n</report-plan>\n\n" });
     this.onMessage("progress", {
@@ -152,6 +151,7 @@ class DeepResearch {
     reportPlan: string
   ): Promise<DeepResearchSearchTask[]> {
     this.onMessage("progress", { step: "serp-query", status: "start" });
+    const thinkTagStreamProcessor = new ThinkTagStreamProcessor();
     const { text } = await generateText({
       model: await this.getThinkingModel(),
       system: getSystemPrompt(),
@@ -161,7 +161,12 @@ class DeepResearch {
       ].join("\n\n"),
     });
     const querySchema = getSERPQuerySchema();
-    const data = JSON.parse(removeJsonMarkdown(text));
+    let content = "";
+    thinkTagStreamProcessor.processChunk(text, (data) => {
+      content += data;
+    });
+    const data = JSON.parse(removeJsonMarkdown(content));
+    thinkTagStreamProcessor.end();
     const result = querySchema.safeParse(data);
     if (result.success) {
       const tasks: DeepResearchSearchTask[] = data.map(
@@ -186,6 +191,7 @@ class DeepResearch {
     enableReferences = true
   ): Promise<SearchTask[]> {
     this.onMessage("progress", { step: "task-list", status: "start" });
+    const thinkTagStreamProcessor = new ThinkTagStreamProcessor();
     const results: SearchTask[] = [];
     for await (const item of tasks) {
       this.onMessage("progress", {
@@ -285,8 +291,16 @@ class DeepResearch {
       });
       for await (const part of searchResult.fullStream) {
         if (part.type === "text-delta") {
-          content += part.textDelta;
-          this.onMessage("message", { type: "text", text: part.textDelta });
+          thinkTagStreamProcessor.processChunk(
+            part.textDelta,
+            (data) => {
+              content += data;
+              this.onMessage("message", { type: "text", text: data });
+            },
+            (data) => {
+              this.onMessage("reasoning", { type: "text", text: data });
+            }
+          );
         } else if (part.type === "reasoning") {
           this.onMessage("reasoning", { type: "text", text: part.textDelta });
         } else if (part.type === "source") {
@@ -317,6 +331,7 @@ class DeepResearch {
           }
         }
       }
+      thinkTagStreamProcessor.end();
 
       if (images.length > 0) {
         const imageContent =
@@ -374,6 +389,7 @@ class DeepResearch {
     enableReferences = true
   ): Promise<FinalReportResult> {
     this.onMessage("progress", { step: "final-report", status: "start" });
+    const thinkTagStreamProcessor = new ThinkTagStreamProcessor();
     const learnings = tasks.map((item) => item.learning);
     const sources: Source[] = unique(
       flat(tasks.map((item) => item.sources || [])),
@@ -403,6 +419,16 @@ class DeepResearch {
     this.onMessage("message", { type: "text", text: "<final-report>\n" });
     for await (const part of result.fullStream) {
       if (part.type === "text-delta") {
+        thinkTagStreamProcessor.processChunk(
+          part.textDelta,
+          (data) => {
+            content += data;
+            this.onMessage("message", { type: "text", text: data });
+          },
+          (data) => {
+            this.onMessage("reasoning", { type: "text", text: data });
+          }
+        );
         content += part.textDelta;
         this.onMessage("message", { type: "text", text: part.textDelta });
       } else if (part.type === "reasoning") {
@@ -426,6 +452,7 @@ class DeepResearch {
       }
     }
     this.onMessage("message", { type: "text", text: "\n</final-report>\n\n" });
+    thinkTagStreamProcessor.end();
 
     const title = content
       .split("\n")[0]

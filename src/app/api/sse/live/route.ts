@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
                 data.status
               }`
             );
-            if (data.step === "final-report") {
+            if (data.step === "final-report" && data.status === "end") {
               controller.close();
             }
           } else if (event === "error") {
